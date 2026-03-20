@@ -1,6 +1,6 @@
 {
   "name": "react-fit-list",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A headless React component for rendering a single-line list that collapses overflowing items into a +N indicator.",
   "keywords": [
     "react",
