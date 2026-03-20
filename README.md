@@ -11,6 +11,8 @@ It ships with:
 - a headless `useFitList()` hook for custom renderers
 - TypeScript types for component and hook APIs
 
+👉 **Live demo:** https://sincerelyfaust.github.io/react-fit-list/
+
 ## Use cases
 
 `react-fit-list` works well for interfaces where wrapping would break the layout, such as:
