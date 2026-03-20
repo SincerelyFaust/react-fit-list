@@ -1,5 +1,7 @@
 # react-fit-list
 
+[![npm version](https://img.shields.io/npm/v/react-fit-list.svg)](https://www.npmjs.com/package/react-fit-list)
+
 ![Resizable FitList demo](./docs/demo.gif)
 
 `react-fit-list` is a small headless React utility for rendering a **single-line list that never wraps**.
@@ -12,6 +14,8 @@ It ships with:
 - TypeScript types for component and hook APIs
 
 👉 **Live demo:** https://sincerelyfaust.github.io/react-fit-list/
+
+📦 **npm:** https://www.npmjs.com/package/react-fit-list
 
 ## Use cases
 
