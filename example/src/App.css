@@ -3,8 +3,15 @@
   background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
+  overflow-x: hidden;
 }
 
 .page {
@@ -118,12 +125,26 @@ h1 {
   color: #64748b;
 }
 
+.mobile-width-control {
+  display: grid;
+  gap: 8px;
+  color: #475569;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.mobile-width-control input {
+  width: 100%;
+}
+
 .example-frame-shell {
   position: relative;
+  width: 100%;
   min-width: 0;
 }
 
 .example-frame {
+  width: 100%;
   min-width: 180px;
   max-width: 100%;
   padding: 14px;
@@ -182,7 +203,7 @@ h1 {
 .popover {
   position: absolute;
   z-index: 10;
-  max-width: min(320px, calc(100% - 16px));
+  max-width: min(320px, calc(100vw - 16px));
   padding: 12px;
   border: 1px solid #e5e7eb;
   border-radius: 14px;
@@ -215,5 +236,9 @@ h1 {
 
   h1 {
     font-size: 2.7rem;
+  }
+
+  .example-frame {
+    resize: none;
   }
 }
