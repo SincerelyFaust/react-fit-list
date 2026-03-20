@@ -1,0 +1,66 @@
+{
+  "name": "react-fit-list",
+  "version": "1.0.0",
+  "description": "A headless React component for rendering a single-line list that collapses overflowing items into a +N indicator.",
+  "keywords": [
+    "react",
+    "overflow",
+    "list",
+    "badges",
+    "chips",
+    "responsive",
+    "headless",
+    "ui"
+  ],
+  "homepage": "https://github.com/SincerelyFaust/react-fit-list#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SincerelyFaust/react-fit-list.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SincerelyFaust/react-fit-list/issues"
+  },
+  "license": "MIT",
+  "author": "Marin Heđeš",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.0",
+    "@types/react": "^19.1.16",
+    "@types/react-dom": "^19.1.9",
+    "jsdom": "^26.1.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run typecheck && npm run test && npm run build"
+  }
+}
