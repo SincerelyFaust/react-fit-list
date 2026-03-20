@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -28,16 +28,19 @@ jobs:
           version: 9
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
           cache: pnpm
+          cache-dependency-path: example/pnpm-lock.yaml
 
-      - name: Install dependencies
+      - name: Install example dependencies
+        working-directory: example
         run: pnpm install --frozen-lockfile
 
       - name: Build example
-        run: pnpm --dir example build
+        working-directory: example
+        run: pnpm build
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
