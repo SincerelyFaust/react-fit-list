@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { FitList } from "react-fit-list";
 import type { FitListOverflowRenderArgs } from "react-fit-list";
 import "./App.css";
+import { FaGithub } from "react-icons/fa";
+import { SiNpm } from "react-icons/si";
 
 type Item = {
   id: number;
@@ -29,28 +31,6 @@ const npmUrl = "https://www.npmjs.com/package/react-fit-list";
 
 function Tag({ children }: { children: React.ReactNode }) {
   return <span className="tag">{children}</span>;
-}
-
-function GithubIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="link-icon">
-      <path
-        fill="currentColor"
-        d="M12 2C6.477 2 2 6.589 2 12.248c0 4.528 2.865 8.37 6.839 9.727.5.096.682-.222.682-.496 0-.245-.009-.893-.014-1.752-2.782.62-3.369-1.37-3.369-1.37-.455-1.173-1.11-1.486-1.11-1.486-.908-.636.069-.624.069-.624 1.004.072 1.532 1.054 1.532 1.054.892 1.566 2.341 1.114 2.91.852.091-.664.349-1.114.635-1.37-2.22-.259-4.555-1.138-4.555-5.063 0-1.118.39-2.033 1.029-2.75-.103-.26-.446-1.302.098-2.714 0 0 .84-.277 2.75 1.05A9.303 9.303 0 0 1 12 6.838a9.27 9.27 0 0 1 2.504.346c1.909-1.327 2.748-1.05 2.748-1.05.546 1.412.202 2.454.1 2.714.64.717 1.028 1.632 1.028 2.75 0 3.935-2.339 4.801-4.566 5.055.359.318.679.943.679 1.901 0 1.372-.012 2.479-.012 2.816 0 .276.18.596.688.495C19.138 20.614 22 16.774 22 12.248 22 6.589 17.523 2 12 2Z"
-      />
-    </svg>
-  );
-}
-
-function NpmIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="link-icon">
-      <path
-        fill="currentColor"
-        d="M2 7.5v9h10.5v-6h3v6H22v-9H2Zm18 7.5h-2.5v-6h-7.5v6H4v-6h16v6Z"
-      />
-    </svg>
-  );
 }
 
 function App() {
@@ -152,7 +132,7 @@ function App() {
               target="_blank"
               rel="noreferrer"
             >
-              <NpmIcon />
+              <SiNpm />
               <span>NPM</span>
             </a>
             <a
@@ -161,7 +141,7 @@ function App() {
               target="_blank"
               rel="noreferrer"
             >
-              <GithubIcon />
+              <FaGithub />
               <span>GitHub</span>
             </a>
           </div>
