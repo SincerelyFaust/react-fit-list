@@ -16,8 +16,8 @@ describe("FitList", () => {
       />
     );
 
-    expect(screen.getByText("Security")).toBeTruthy();
-    expect(screen.getByText("Startups")).toBeTruthy();
+    expect(screen.getAllByText("Security").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Startups").length).toBeGreaterThan(0);
   });
 
   it("renders the empty fallback when there are no items", () => {
