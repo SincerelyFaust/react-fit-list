@@ -188,6 +188,8 @@ h1 {
   position: absolute;
   z-index: 10;
   max-width: min(320px, calc(100vw - 16px));
+  max-height: min(320px, calc(100vh - 16px));
+  overflow: auto;
   padding: 12px;
   border: 1px solid #e5e7eb;
   border-radius: 14px;

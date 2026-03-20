@@ -15,6 +15,8 @@ type PopoverState = {
   left: number;
   top: number;
   anchorLeft: number;
+  anchorTop: number;
+  anchorBottom: number;
 };
 
 const items: Item[] = [
@@ -129,7 +131,9 @@ function App() {
 
       const shellRect = frameShell.getBoundingClientRect();
       const popoverWidth = node.offsetWidth;
+      const popoverHeight = node.offsetHeight;
       const viewportPadding = 8;
+
       const minLeft = Math.max(viewportPadding - shellRect.left, 8);
       const maxLeft = Math.max(
         minLeft,
@@ -137,11 +141,36 @@ function App() {
       );
       const nextLeft = Math.min(Math.max(popover.anchorLeft, minLeft), maxLeft);
 
+      const spaceBelow =
+        window.innerHeight - shellRect.top - popover.anchorBottom;
+      const canPlaceBelow = spaceBelow >= popoverHeight + 10;
+
+      const preferredTop = canPlaceBelow
+        ? popover.anchorBottom + 10
+        : Math.max(
+            viewportPadding - shellRect.top,
+            popover.anchorTop - popoverHeight - 10
+          );
+
+      const maxTop = Math.max(
+        viewportPadding - shellRect.top,
+        window.innerHeight - viewportPadding - shellRect.top - popoverHeight
+      );
+
+      const nextTop = Math.min(preferredTop, maxTop);
+
       setPopover((current) => {
-        if (!current || current.left === nextLeft) return current;
+        if (
+          !current ||
+          (current.left === nextLeft && current.top === nextTop)
+        ) {
+          return current;
+        }
+
         return {
           ...current,
           left: nextLeft,
+          top: nextTop,
         };
       });
     };
@@ -183,8 +212,10 @@ function App() {
       return {
         hiddenItems: args.hiddenItems,
         left: anchorLeft,
-        anchorLeft,
         top: triggerRect.bottom - frameRect.top + 10,
+        anchorLeft,
+        anchorTop: triggerRect.top - frameRect.top,
+        anchorBottom: triggerRect.bottom - frameRect.top,
       };
     });
   };
@@ -270,7 +301,10 @@ function App() {
               className="example-frame"
               style={{
                 width: isMobileViewport
-                  ? `min(100%, ${Math.min(mobileFrameWidth, mobileSliderMax)}px)`
+                  ? `min(100%, ${Math.min(
+                      mobileFrameWidth,
+                      mobileSliderMax
+                    )}px)`
                   : "min(100%, 360px)",
               }}
             >
