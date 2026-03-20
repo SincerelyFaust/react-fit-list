@@ -256,7 +256,7 @@ For best results:
 
 ## Local development
 
-A Vite demo app is included in the `example/` directory. The demo uses a native resize handle instead of a slider so you can drag the container width directly.
+A Vite demo app is included in the `example/` directory.
 
 ```bash
 cd example
