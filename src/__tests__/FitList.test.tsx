@@ -19,11 +19,15 @@ beforeAll(() => {
 
 afterAll(() => {
   if (originalClientWidth) {
-    Object.defineProperty(HTMLElement.prototype, "clientWidth", originalClientWidth);
+    Object.defineProperty(
+      HTMLElement.prototype,
+      "clientWidth",
+      originalClientWidth
+    );
     return;
   }
 
-  delete (HTMLElement.prototype as Partial<HTMLElement>).clientWidth;
+  Reflect.deleteProperty(HTMLElement.prototype, "clientWidth");
 });
 
 describe("FitList", () => {
