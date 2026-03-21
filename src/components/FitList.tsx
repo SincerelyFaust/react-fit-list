@@ -39,6 +39,7 @@ export function FitList<T>({
   emptyFallback = null,
   gap = 8,
   collapseFrom = "end",
+  overflowPlacement = "end",
   reserveOverflowSpace = false,
   overflowWidth,
   estimatedItemWidth,
@@ -139,6 +140,11 @@ export function FitList<T>({
 
   const overflowChildren = renderOverflow(overflowArgs);
 
+  const isClosestOverflowPlacement =
+    overflowPlacement === "closest" && !isExpanded;
+  const shouldPlaceOverflowBeforeItems =
+    isClosestOverflowPlacement && collapseFrom === "start";
+
   const overflowButtonProps: ButtonLikeProps = {
     className: overflowClassName,
     type: "button",
@@ -147,63 +153,69 @@ export function FitList<T>({
     children: overflowChildren,
   };
 
+  const overflowNode = (hiddenCount > 0 || reserveOverflowSpace) ? (
+    <div
+      ref={registerOverflow}
+      style={{
+        visibility: hiddenCount > 0 ? "visible" : "hidden",
+        flex: "0 0 auto",
+        whiteSpace: "nowrap",
+        display: "block",
+      }}
+    >
+      {hiddenCount > 0 ? (
+        overflowAs === "button" ? (
+          <button {...overflowButtonProps} />
+        ) : (
+          React.createElement(
+            OverflowComponent,
+            { className: overflowClassName },
+            overflowChildren
+          )
+        )
+      ) : (
+        <span aria-hidden="true">+0</span>
+      )}
+    </div>
+  ) : null;
+
+  const itemsNode = (
+    <div
+      className={listClassName}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap,
+        minWidth: 0,
+        flex: isClosestOverflowPlacement ? "0 1 auto" : "1 1 auto",
+        overflow: "hidden",
+      }}
+    >
+      {visibleEntries.map(({ item, index }) => {
+        const key = getKey(item, index);
+        return (
+          <div
+            key={key}
+            ref={registerItem(key)}
+            className={itemClassName}
+            style={{
+              minWidth: 0,
+              flex: "0 0 auto",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {renderItem(item, index)}
+          </div>
+        );
+      })}
+    </div>
+  );
+
   const content = (
     <>
-      <div
-        className={listClassName}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap,
-          minWidth: 0,
-          flex: "1 1 auto",
-          overflow: "hidden",
-        }}
-      >
-        {visibleEntries.map(({ item, index }) => {
-          const key = getKey(item, index);
-          return (
-            <div
-              key={key}
-              ref={registerItem(key)}
-              className={itemClassName}
-              style={{
-                minWidth: 0,
-                flex: "0 0 auto",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {renderItem(item, index)}
-            </div>
-          );
-        })}
-      </div>
-
-      {(hiddenCount > 0 || reserveOverflowSpace) && (
-        <div
-          ref={registerOverflow}
-          style={{
-            visibility: hiddenCount > 0 ? "visible" : "hidden",
-            flex: "0 0 auto",
-            whiteSpace: "nowrap",
-            display: "block",
-          }}
-        >
-          {hiddenCount > 0 ? (
-            overflowAs === "button" ? (
-              <button {...overflowButtonProps} />
-            ) : (
-              React.createElement(
-                OverflowComponent,
-                { className: overflowClassName },
-                overflowChildren
-              )
-            )
-          ) : (
-            <span aria-hidden="true">+0</span>
-          )}
-        </div>
-      )}
+      {shouldPlaceOverflowBeforeItems ? overflowNode : null}
+      {itemsNode}
+      {shouldPlaceOverflowBeforeItems ? null : overflowNode}
     </>
   );
 

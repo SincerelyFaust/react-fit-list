@@ -113,6 +113,7 @@ import { FitList } from 'react-fit-list'
 | `emptyFallback` | `React.ReactNode` | `null` | Rendered when `items` is empty. |
 | `gap` | `number` | `8` | Pixel gap between items. |
 | `collapseFrom` | `'end' \| 'start'` | `'end'` | Collapse from the end or start of the list. |
+| `overflowPlacement` | `'end' \| 'closest'` | `'end'` | Keep the overflow pinned to the row end or place it next to the hidden segment. |
 | `reserveOverflowSpace` | `boolean` | `false` | Reserve room for the overflow element even when everything currently fits. |
 | `overflowWidth` | `number` | auto | Fixed overflow width in pixels. Useful when the trigger width is known. |
 | `estimatedItemWidth` | `number \| ((item, index) => number)` | fallback `96` | Used in `estimate` mode or before live measurements are available. |
@@ -191,6 +192,22 @@ Useful when the most recent or most important items are at the end.
   getKey={(item) => item.id}
   renderItem={(item) => <Tag>{item.label}</Tag>}
   collapseFrom="start"
+/>
+```
+
+### Overflow placement
+
+By default, the overflow affordance stays pinned to the far end of the row.
+Set `overflowPlacement="closest"` to make it hug the hidden segment instead.
+This is especially useful with `collapseFrom="start"`.
+
+```tsx
+<FitList
+  items={items}
+  getKey={(item) => item.id}
+  renderItem={(item) => <Tag>{item.label}</Tag>}
+  collapseFrom="start"
+  overflowPlacement="closest"
 />
 ```
 

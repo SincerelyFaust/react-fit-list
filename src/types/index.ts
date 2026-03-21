@@ -10,6 +10,15 @@ import type * as React from "react";
 export type CollapseFrom = "end" | "start";
 
 /**
+ * Controls where the overflow affordance is rendered relative to the visible
+ * items.
+ *
+ * - `"end"`: always render the overflow affordance at the far end of the row.
+ * - `"closest"`: render the overflow affordance next to the hidden segment.
+ */
+export type OverflowPlacement = "end" | "closest";
+
+/**
  * Determines how item widths are measured when calculating how many items fit.
  *
  * - `"live"`: use hidden measurement nodes / rendered nodes for accurate widths.
@@ -140,6 +149,8 @@ export type FitListProps<T> = {
   gap?: number;
   /** Which side should collapse first when there is not enough room. */
   collapseFrom?: CollapseFrom;
+  /** Controls whether the overflow stays pinned to the row end or hugs the hidden segment. */
+  overflowPlacement?: OverflowPlacement;
   /** Keeps overflow space reserved even when everything fits. */
   reserveOverflowSpace?: boolean;
   /** Fixed overflow width in pixels. */

@@ -1,7 +1,30 @@
 import React from "react";
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { FitList } from "../components/FitList";
+
+const originalClientWidth = Object.getOwnPropertyDescriptor(
+  HTMLElement.prototype,
+  "clientWidth"
+);
+
+beforeAll(() => {
+  Object.defineProperty(HTMLElement.prototype, "clientWidth", {
+    configurable: true,
+    get() {
+      return 220;
+    },
+  });
+});
+
+afterAll(() => {
+  if (originalClientWidth) {
+    Object.defineProperty(HTMLElement.prototype, "clientWidth", originalClientWidth);
+    return;
+  }
+
+  delete (HTMLElement.prototype as Partial<HTMLElement>).clientWidth;
+});
 
 describe("FitList", () => {
   it("renders all items", () => {
@@ -31,5 +54,59 @@ describe("FitList", () => {
     );
 
     expect(screen.getByText("—")).toBeTruthy();
+  });
+
+  it("keeps the overflow at the row end by default", () => {
+    const { container } = render(
+      <FitList
+        items={["A", "B", "C", "D"]}
+        getKey={(item) => item}
+        renderItem={(item) => <span>{item}</span>}
+        measurementMode="estimate"
+        estimatedItemWidth={80}
+        overflowWidth={40}
+        collapseFrom="start"
+      />
+    );
+
+    expect(container.firstElementChild?.textContent).toBe("CD+2");
+  });
+
+  it("lets trailing overflow hug the closest visible item", () => {
+    const { container } = render(
+      <FitList
+        items={["A", "B", "C", "D"]}
+        getKey={(item) => item}
+        renderItem={(item) => <span>{item}</span>}
+        measurementMode="estimate"
+        estimatedItemWidth={80}
+        overflowWidth={40}
+        collapseFrom="end"
+        overflowPlacement="closest"
+      />
+    );
+
+    const root = container.firstElementChild as HTMLElement;
+    const itemsRow = root.firstElementChild as HTMLElement;
+
+    expect(root.textContent).toBe("AB+2");
+    expect(itemsRow.style.flex).toBe("0 1 auto");
+  });
+
+  it("can place the overflow next to the hidden segment", () => {
+    const { container } = render(
+      <FitList
+        items={["A", "B", "C", "D"]}
+        getKey={(item) => item}
+        renderItem={(item) => <span>{item}</span>}
+        measurementMode="estimate"
+        estimatedItemWidth={80}
+        overflowWidth={40}
+        collapseFrom="start"
+        overflowPlacement="closest"
+      />
+    );
+
+    expect(container.firstElementChild?.textContent).toBe("+2CD");
   });
 });
