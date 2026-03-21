@@ -99,7 +99,7 @@ export function FitList<T>({
     expanded,
     defaultExpanded,
     onExpandedChange,
-    measureOverflowWidth,
+    measureOverflowWidth: isDefaultOverflowRenderer ? measureOverflowWidth : undefined,
   });
 
   const visibleEntries = React.useMemo(() => {
@@ -118,6 +118,11 @@ export function FitList<T>({
       .slice(startIndex)
       .map((item, index) => ({ item, index: startIndex + index }));
   }, [collapseFrom, isExpanded, items, visibleItems.length]);
+
+  // Avoid mounting a second copy of a custom overflow renderer in the hidden
+  // measurement tree. Some interactive renderers (for example Radix popovers)
+  // keep shared state and can open twice when two trigger instances exist.
+  const shouldRenderMeasuredOverflow = isDefaultOverflowRenderer;
 
   if (items.length === 0) {
     return <>{emptyFallback}</>;
@@ -256,13 +261,15 @@ export function FitList<T>({
             );
           })}
 
-          <span
-            ref={overflowMeasureRef}
-            className={overflowClassName}
-            style={{ display: "inline-flex", whiteSpace: "nowrap" }}
-          >
-            {overflowChildren}
-          </span>
+          {shouldRenderMeasuredOverflow ? (
+            <span
+              ref={overflowMeasureRef}
+              className={overflowClassName}
+              style={{ display: "inline-flex", whiteSpace: "nowrap" }}
+            >
+              {overflowChildren}
+            </span>
+          ) : null}
         </div>
       </div>
     </>
