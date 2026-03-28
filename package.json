@@ -1,7 +1,7 @@
 {
   "name": "react-fit-list",
   "version": "1.0.4",
-  "description": "A headless React component for rendering a single-line list that collapses overflowing items into a +N indicator.",
+  "description": "A headless React primitive for keeping horizontal content on one line by fitting what can be shown and collapsing the rest behind an overflow button.",
   "keywords": [
     "react",
     "overflow",

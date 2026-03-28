@@ -237,8 +237,9 @@ function App() {
               <span className="package-name">react-fit-list</span>
             </h1>
             <p className="description">
-              A headless React component for rendering a single-line list that
-              collapses overflowing items into a <code>+N</code> indicator.
+              A headless React primitive for keeping horizontal content on one
+              line by fitting what can be shown and collapsing the rest behind
+              an overflow button.
             </p>
           </div>
 
@@ -319,7 +320,7 @@ function App() {
                 getKey={(item) => item.id}
                 gap={8}
                 className="fitlist"
-                overflowClassName="more"
+                overflowButtonClassName="more"
                 renderItem={(item) => <Tag>{item.label}</Tag>}
                 renderOverflow={({ hiddenCount }) => <>{`+${hiddenCount}`}</>}
                 onOverflowClick={openOverflowPopover}
