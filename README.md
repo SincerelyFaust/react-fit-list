@@ -61,26 +61,6 @@ export function Example() {
 }
 ```
 
-## Why react-fit-list
-
-- Keeps horizontal UI elements on one line without forcing you into a styled component library.
-- Gives you a simple default component when you want fast adoption.
-- Exposes the fitting logic as a hook when you need custom structure or interaction.
-- Stays focused on one job: deciding which items fit and how many are hidden.
-
-## Component or hook?
-
-Use `<FitList />` when you want the fitting behavior with the least amount of setup.
-
-Use `useFitList()` when you want full control over markup, overflow interaction, positioning, or accessibility semantics.
-
-## Design goals
-
-- Headless-first API with minimal assumptions about your UI.
-- Reliable single-row fitting for chips, tags, breadcrumbs, recipients, and similar content.
-- Predictable behavior with either live DOM measurement or width estimates.
-- Small public API that is easy to understand and customize.
-
 ## Component API
 
 ### `<FitList />`
@@ -170,29 +150,3 @@ const fit = useFitList({
 | `setExpanded` | `(expanded: boolean) => void` | Sets expanded state directly. |
 | `toggleExpanded` | `() => void` | Toggles expanded state. |
 | `recompute` | `() => void` | Re-runs the fit calculation using current measurements. |
-
-## Rendering and customization notes
-
-### Measurement modes
-
-- `measurement="live"` uses rendered DOM nodes for the most accurate fit calculation.
-- `measurement="estimate"` uses `itemWidthEstimate`, which is useful when widths are predictable or when you want to avoid live measurement costs.
-
-### Class names
-
-- `className` styles the outer row container.
-- `itemsClassName` styles the wrapper that contains the visible items.
-- `itemClassName` styles each visible item wrapper.
-- `overflowButtonClassName` styles the built-in overflow button.
-- `measurementClassName` styles the hidden measurement nodes and should usually match item sizing styles when CSS changes intrinsic width.
-
-### Overflow interaction
-
-`FitList` always renders the overflow affordance as a `<button>`. If you need a custom trigger, custom positioning, or your own interaction model, use `useFitList()` and render the UI yourself.
-
-## Notes
-
-- Keep item content on one line for the most predictable results.
-- Use stable keys from `getKey`; changing keys between renders invalidates width measurements.
-- If item width depends on CSS, make sure the measurement nodes receive matching styles.
-- The package is safe to render in SSR environments. Layout measurement only happens in the browser after mount.
