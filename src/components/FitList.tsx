@@ -2,11 +2,6 @@ import * as React from "react";
 import { useFitList } from "../hooks/useFitList";
 import type { FitListOverflowRenderArgs, FitListProps } from "../types";
 
-type ButtonLikeProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  className?: string;
-  children?: React.ReactNode;
-};
-
 function defaultOverflow({ hiddenCount }: { hiddenCount: number }) {
   return <span>+{hiddenCount}</span>;
 }
@@ -32,27 +27,23 @@ export function FitList<T>({
   renderItem,
   renderOverflow = defaultOverflow,
   className,
-  listClassName,
+  itemsClassName,
   itemClassName,
-  overflowClassName,
-  measureClassName,
-  emptyFallback = null,
+  overflowButtonClassName,
+  measurementClassName,
+  emptyContent = null,
   gap = 8,
   collapseFrom = "end",
-  overflowPlacement = "end",
-  reserveOverflowSpace = false,
+  overflowPosition = "edge",
+  preserveOverflowSpace = false,
   overflowWidth,
-  estimatedItemWidth,
-  measurementMode = "live",
+  itemWidthEstimate,
+  measurement = "live",
   expanded,
   defaultExpanded = false,
   onExpandedChange,
-  as = "div",
   onOverflowClick,
-  overflowAs = "button",
 }: FitListProps<T>) {
-  const Component = as as keyof React.JSX.IntrinsicElements;
-  const OverflowComponent = overflowAs as keyof React.JSX.IntrinsicElements;
   const overflowMeasureRef = React.useRef<HTMLSpanElement | null>(null);
   const isDefaultOverflowRenderer = renderOverflow === defaultOverflow;
 
@@ -93,10 +84,10 @@ export function FitList<T>({
     getKey,
     gap,
     collapseFrom,
-    reserveOverflowSpace,
+    preserveOverflowSpace,
     overflowWidth,
-    estimatedItemWidth,
-    measurementMode,
+    itemWidthEstimate,
+    measurement,
     expanded,
     defaultExpanded,
     onExpandedChange,
@@ -126,7 +117,7 @@ export function FitList<T>({
   const shouldRenderMeasuredOverflow = isDefaultOverflowRenderer;
 
   if (items.length === 0) {
-    return <>{emptyFallback}</>;
+    return <>{emptyContent}</>;
   }
 
   const overflowArgs: FitListOverflowRenderArgs<T> = {
@@ -140,20 +131,11 @@ export function FitList<T>({
 
   const overflowChildren = renderOverflow(overflowArgs);
 
-  const isClosestOverflowPlacement =
-    overflowPlacement === "closest" && !isExpanded;
+  const isInlineOverflow = overflowPosition === "inline" && !isExpanded;
   const shouldPlaceOverflowBeforeItems =
-    isClosestOverflowPlacement && collapseFrom === "start";
+    isInlineOverflow && collapseFrom === "start";
 
-  const overflowButtonProps: ButtonLikeProps = {
-    className: overflowClassName,
-    type: "button",
-    onClick: (event) => onOverflowClick?.(overflowArgs, event as React.MouseEvent<HTMLElement>),
-    "aria-expanded": isExpanded,
-    children: overflowChildren,
-  };
-
-  const overflowNode = (hiddenCount > 0 || reserveOverflowSpace) ? (
+  const overflowNode = hiddenCount > 0 || preserveOverflowSpace ? (
     <div
       ref={registerOverflow}
       style={{
@@ -164,15 +146,14 @@ export function FitList<T>({
       }}
     >
       {hiddenCount > 0 ? (
-        overflowAs === "button" ? (
-          <button {...overflowButtonProps} />
-        ) : (
-          React.createElement(
-            OverflowComponent,
-            { className: overflowClassName },
-            overflowChildren
-          )
-        )
+        <button
+          className={overflowButtonClassName}
+          type="button"
+          onClick={(event) => onOverflowClick?.(overflowArgs, event)}
+          aria-expanded={isExpanded}
+        >
+          {overflowChildren}
+        </button>
       ) : (
         <span aria-hidden="true">+0</span>
       )}
@@ -181,13 +162,13 @@ export function FitList<T>({
 
   const itemsNode = (
     <div
-      className={listClassName}
+      className={itemsClassName}
       style={{
         display: "flex",
         alignItems: "center",
         gap,
         minWidth: 0,
-        flex: isClosestOverflowPlacement ? "0 1 auto" : "1 1 auto",
+        flex: isInlineOverflow ? "0 1 auto" : "1 1 auto",
         overflow: "hidden",
       }}
     >
@@ -211,33 +192,23 @@ export function FitList<T>({
     </div>
   );
 
-  const content = (
-    <>
-      {shouldPlaceOverflowBeforeItems ? overflowNode : null}
-      {itemsNode}
-      {shouldPlaceOverflowBeforeItems ? null : overflowNode}
-    </>
-  );
-
-  const root = React.createElement(
-    Component,
-    {
-      ref: containerRef as React.Ref<any>,
-      className,
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap,
-        minWidth: 0,
-        whiteSpace: "nowrap",
-      },
-    },
-    content
-  );
-
   return (
     <>
-      {root}
+      <div
+        ref={containerRef}
+        className={className}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap,
+          minWidth: 0,
+          whiteSpace: "nowrap",
+        }}
+      >
+        {shouldPlaceOverflowBeforeItems ? overflowNode : null}
+        {itemsNode}
+        {shouldPlaceOverflowBeforeItems ? null : overflowNode}
+      </div>
 
       {/*
         Hidden measurement tree used to capture accurate intrinsic widths without
@@ -262,7 +233,7 @@ export function FitList<T>({
               <span
                 key={`measure:${String(key)}`}
                 ref={registerMeasureItem(key)}
-                className={measureClassName ?? itemClassName}
+                className={measurementClassName ?? itemClassName}
                 style={{
                   display: "inline-flex",
                   whiteSpace: "nowrap",
@@ -276,7 +247,7 @@ export function FitList<T>({
           {shouldRenderMeasuredOverflow ? (
             <span
               ref={overflowMeasureRef}
-              className={overflowClassName}
+              className={overflowButtonClassName}
               style={{ display: "inline-flex", whiteSpace: "nowrap" }}
             >
               {overflowChildren}

@@ -37,9 +37,9 @@ describe("FitList", () => {
         items={["Security", "Startups"]}
         getKey={(item) => item}
         renderItem={(item) => <span>{item}</span>}
-        measurementMode="estimate"
-        estimatedItemWidth={80}
-        reserveOverflowSpace={false}
+        measurement="estimate"
+        itemWidthEstimate={80}
+        preserveOverflowSpace={false}
       />
     );
 
@@ -53,7 +53,7 @@ describe("FitList", () => {
         items={[] as string[]}
         getKey={(item) => item}
         renderItem={(item) => <span>{item}</span>}
-        emptyFallback={<span>—</span>}
+        emptyContent={<span>—</span>}
       />
     );
 
@@ -66,8 +66,8 @@ describe("FitList", () => {
         items={["A", "B", "C", "D"]}
         getKey={(item) => item}
         renderItem={(item) => <span>{item}</span>}
-        measurementMode="estimate"
-        estimatedItemWidth={80}
+        measurement="estimate"
+        itemWidthEstimate={80}
         overflowWidth={40}
         collapseFrom="start"
       />
@@ -76,17 +76,17 @@ describe("FitList", () => {
     expect(container.firstElementChild?.textContent).toBe("CD+2");
   });
 
-  it("lets trailing overflow hug the closest visible item", () => {
+  it("lets trailing overflow hug the inline visible item", () => {
     const { container } = render(
       <FitList
         items={["A", "B", "C", "D"]}
         getKey={(item) => item}
         renderItem={(item) => <span>{item}</span>}
-        measurementMode="estimate"
-        estimatedItemWidth={80}
+        measurement="estimate"
+        itemWidthEstimate={80}
         overflowWidth={40}
         collapseFrom="end"
-        overflowPlacement="closest"
+        overflowPosition="inline"
       />
     );
 
@@ -103,11 +103,11 @@ describe("FitList", () => {
         items={["A", "B", "C", "D"]}
         getKey={(item) => item}
         renderItem={(item) => <span>{item}</span>}
-        measurementMode="estimate"
-        estimatedItemWidth={80}
+        measurement="estimate"
+        itemWidthEstimate={80}
         overflowWidth={40}
         collapseFrom="start"
-        overflowPlacement="closest"
+        overflowPosition="inline"
       />
     );
 

@@ -16,12 +16,12 @@ const useIsoLayoutEffect =
 function getEstimatedWidth<T>(
   item: T,
   index: number,
-  estimatedItemWidth: number | ((item: T, index: number) => number) | undefined,
+  itemWidthEstimate: number | ((item: T, index: number) => number) | undefined,
   fallback: number
 ) {
-  if (typeof estimatedItemWidth === "function")
-    return estimatedItemWidth(item, index);
-  if (typeof estimatedItemWidth === "number") return estimatedItemWidth;
+  if (typeof itemWidthEstimate === "function")
+    return itemWidthEstimate(item, index);
+  if (typeof itemWidthEstimate === "number") return itemWidthEstimate;
   return fallback;
 }
 
@@ -45,12 +45,12 @@ function getEstimatedWidth<T>(
 export function useFitList<T>({
   items,
   getKey,
-  reserveOverflowSpace = false,
+  preserveOverflowSpace = false,
   overflowWidth,
   gap = 8,
   collapseFrom = "end",
-  estimatedItemWidth,
-  measurementMode = "live",
+  itemWidthEstimate,
+  measurement = "live",
   expanded,
   defaultExpanded = false,
   onExpandedChange,
@@ -90,11 +90,11 @@ export function useFitList<T>({
       const key = keys[index];
       const measureNode = measureNodeMap.current.get(key);
       const liveNode = itemNodeMap.current.get(key);
-      if (measurementMode === "live") {
+      if (measurement === "live") {
         if (measureNode) return measureNode.offsetWidth;
         if (liveNode) return liveNode.offsetWidth;
       }
-      return getEstimatedWidth(item, index, estimatedItemWidth, 96);
+      return getEstimatedWidth(item, index, itemWidthEstimate, 96);
     });
 
     let nextVisible = items.length;
@@ -119,7 +119,7 @@ export function useFitList<T>({
         } else {
           currentOverflowWidth = overflowRef.current?.offsetWidth ?? 44;
         }
-      } else if (reserveOverflowSpace) {
+      } else if (preserveOverflowSpace) {
         if (typeof overflowWidth === "number") {
           currentOverflowWidth = overflowWidth;
         } else {
@@ -128,7 +128,7 @@ export function useFitList<T>({
       }
 
       const overflowGap =
-        (hiddenCount > 0 || reserveOverflowSpace) && count > 0 ? gap : 0;
+        (hiddenCount > 0 || preserveOverflowSpace) && count > 0 ? gap : 0;
       const total = itemsWidth + itemsGap + overflowGap + currentOverflowWidth;
 
       if (total <= containerWidth) {
@@ -140,15 +140,15 @@ export function useFitList<T>({
     setVisibleCount((prev) => (prev === nextVisible ? prev : nextVisible));
   }, [
     collapseFrom,
-    estimatedItemWidth,
+    itemWidthEstimate,
     gap,
     getKey,
     isExpanded,
     items,
-    measurementMode,
+    measurement,
     measureOverflowWidth,
     overflowWidth,
-    reserveOverflowSpace,
+    preserveOverflowSpace,
   ]);
 
   useIsoLayoutEffect(() => {
