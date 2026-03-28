@@ -4,6 +4,10 @@
 
 ![Demo](https://raw.githubusercontent.com/SincerelyFaust/react-fit-list/main/.github/images/demo.gif)
 
+👉 **Live demo:** https://sincerelyfaust.github.io/react-fit-list/
+
+📦 **npm:** https://www.npmjs.com/package/react-fit-list
+
 `react-fit-list` is a headless React utility for rendering a single horizontal row of items, keeping what fits visible and collapsing the rest behind an overflow trigger.
 
 It ships with:
@@ -11,10 +15,6 @@ It ships with:
 - a ready-to-use `<FitList />` component
 - a headless `useFitList()` hook for custom renderers
 - TypeScript types for component and hook APIs
-
-👉 **Live demo:** https://sincerelyfaust.github.io/react-fit-list/
-
-📦 **npm:** https://www.npmjs.com/package/react-fit-list
 
 ## Installation
 
