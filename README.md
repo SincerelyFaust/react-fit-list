@@ -2,7 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/react-fit-list.svg)](https://www.npmjs.com/package/react-fit-list)
 
-![Resizable FitList demo](./docs/demo.gif)
+![Demo](https://raw.githubusercontent.com/SincerelyFaust/react-fit-list/main/.github/images/demo.gif)
 
 `react-fit-list` is a small headless React utility for rendering a **single-line list that never wraps**.
 When the available width is too small, the list collapses extra items into an overflow affordance such as `+3`.
