@@ -4,7 +4,7 @@
 
 ![Demo](https://raw.githubusercontent.com/SincerelyFaust/react-fit-list/main/.github/images/demo.gif)
 
-`react-fit-list` is a headless React primitive for keeping horizontal content on one line by fitting what can be shown and collapsing the rest behind an overflow button.
+`react-fit-list` is a headless React utility for rendering a single horizontal row of items, keeping what fits visible and collapsing the rest behind an overflow trigger.
 
 It ships with:
 
@@ -61,6 +61,26 @@ export function Example() {
 }
 ```
 
+## Why react-fit-list
+
+- Keeps horizontal UI elements on one line without forcing you into a styled component library.
+- Gives you a simple default component when you want fast adoption.
+- Exposes the fitting logic as a hook when you need custom structure or interaction.
+- Stays focused on one job: deciding which items fit and how many are hidden.
+
+## Component or hook?
+
+Use `<FitList />` when you want the fitting behavior with the least amount of setup.
+
+Use `useFitList()` when you want full control over markup, overflow interaction, positioning, or accessibility semantics.
+
+## Design goals
+
+- Headless-first API with minimal assumptions about your UI.
+- Reliable single-row fitting for chips, tags, breadcrumbs, recipients, and similar content.
+- Predictable behavior with either live DOM measurement or width estimates.
+- Small public API that is easy to understand and customize.
+
 ## Component API
 
 ### `<FitList />`
@@ -70,17 +90,17 @@ export function Example() {
 | `items` | `readonly T[]` | — | Items to fit into a single row. |
 | `getKey` | `(item, index) => React.Key` | — | Returns a stable React key for each item. |
 | `renderItem` | `(item, index) => React.ReactNode` | — | Renders a single item. |
-| `renderOverflow` | `(args) => React.ReactNode` | `({ hiddenCount }) => +hiddenCount` | Renders the overflow button contents. |
-| `className` | `string` | — | Class for the root row. |
-| `itemsClassName` | `string` | — | Class for the visible-items wrapper. |
-| `itemClassName` | `string` | — | Class for each item wrapper. |
-| `overflowButtonClassName` | `string` | — | Class for the overflow button. |
-| `measurementClassName` | `string` | `itemClassName` | Class for hidden measurement nodes when sizing depends on matching CSS. |
+| `renderOverflow` | `(args) => React.ReactNode` | `({ hiddenCount }) => +hiddenCount` | Renders the overflow trigger contents. |
+| `className` | `string` | — | Class applied to the root row. |
+| `itemsClassName` | `string` | — | Class applied to the visible-items wrapper. |
+| `itemClassName` | `string` | — | Class applied to each visible item wrapper. |
+| `overflowButtonClassName` | `string` | — | Class applied to the overflow button element. |
+| `measurementClassName` | `string` | `itemClassName` | Class applied to hidden measurement nodes when sizing depends on matching CSS. |
 | `emptyContent` | `React.ReactNode` | `null` | Content rendered when `items` is empty. |
-| `gap` | `number` | `8` | Space between items and the overflow button. |
+| `gap` | `number` | `8` | Space between items and the overflow trigger. |
 | `collapseFrom` | `'end' \| 'start'` | `'end'` | Which side of the list gets collapsed first. |
-| `overflowPosition` | `'edge' \| 'inline'` | `'edge'` | Keep the overflow button at the row edge or place it next to the hidden side. |
-| `preserveOverflowSpace` | `boolean` | `false` | Reserve room for the overflow button even when everything fits. |
+| `overflowPosition` | `'edge' \| 'inline'` | `'edge'` | Keep the overflow trigger at the row edge or place it next to the hidden side. |
+| `preserveOverflowSpace` | `boolean` | `false` | Reserve room for the overflow trigger even when everything fits. |
 | `overflowWidth` | `number` | auto | Fixed overflow width in pixels. Useful when the trigger size is known. |
 | `itemWidthEstimate` | `number \| ((item, index) => number)` | fallback `96` | Width estimate used in `estimate` mode or before live measurements are available. |
 | `measurement` | `'live' \| 'estimate'` | `'live'` | Width calculation strategy. |
@@ -132,7 +152,7 @@ const fit = useFitList({
 | `measurement` | `'live' \| 'estimate'` | `'live'` | Width calculation strategy. |
 | `expanded` | `boolean` | uncontrolled | Controlled expanded state. |
 | `defaultExpanded` | `boolean` | `false` | Initial expanded state. |
-| `onExpandedChange` | `(expanded: boolean) => void` | — | Called when expanded state changes. |
+| `onExpandedChange` | `(expanded: boolean) => void` | — | Called whenever expanded state changes. |
 | `measureOverflowWidth` | `(hiddenCount: number) => number` | — | Custom overflow width measurement callback. |
 
 #### Return value
@@ -151,9 +171,28 @@ const fit = useFitList({
 | `toggleExpanded` | `() => void` | Toggles expanded state. |
 | `recompute` | `() => void` | Re-runs the fit calculation using current measurements. |
 
+## Rendering and customization notes
+
+### Measurement modes
+
+- `measurement="live"` uses rendered DOM nodes for the most accurate fit calculation.
+- `measurement="estimate"` uses `itemWidthEstimate`, which is useful when widths are predictable or when you want to avoid live measurement costs.
+
+### Class names
+
+- `className` styles the outer row container.
+- `itemsClassName` styles the wrapper that contains the visible items.
+- `itemClassName` styles each visible item wrapper.
+- `overflowButtonClassName` styles the built-in overflow button.
+- `measurementClassName` styles the hidden measurement nodes and should usually match item sizing styles when CSS changes intrinsic width.
+
+### Overflow interaction
+
+`FitList` always renders the overflow affordance as a `<button>`. If you need a custom trigger, custom positioning, or your own interaction model, use `useFitList()` and render the UI yourself.
+
 ## Notes
 
-- `FitList` always renders the overflow affordance as a `<button>`. If you need completely custom structure or interaction semantics, use `useFitList()`.
-- For the most accurate results, keep item content on one line and make sure your measurement styling matches the visible styling. Use `measurementClassName` when CSS affects intrinsic width.
-- `measurement="estimate"` is useful when item widths are predictable or when you want to avoid live measurement costs.
-- The package is safe to render in SSR environments. Live layout work only happens in the browser after mount.
+- Keep item content on one line for the most predictable results.
+- Use stable keys from `getKey`; changing keys between renders invalidates width measurements.
+- If item width depends on CSS, make sure the measurement nodes receive matching styles.
+- The package is safe to render in SSR environments. Layout measurement only happens in the browser after mount.

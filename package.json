@@ -1,15 +1,18 @@
 {
   "name": "react-fit-list",
   "version": "1.0.4",
-  "description": "A headless React primitive for keeping horizontal content on one line by fitting what can be shown and collapsing the rest behind an overflow button.",
+  "description": "A headless React utility for rendering a single horizontal row of items, keeping what fits visible and collapsing the rest behind an overflow trigger.",
   "keywords": [
     "react",
+    "fit-list",
     "overflow",
-    "list",
-    "badges",
-    "chips",
-    "responsive",
+    "single-row",
     "headless",
+    "chips",
+    "tags",
+    "breadcrumbs",
+    "responsive",
+    "typescript",
     "ui"
   ],
   "homepage": "https://sincerelyfaust.github.io/react-fit-list/",
