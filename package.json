@@ -1,7 +1,7 @@
 {
   "name": "react-fit-list",
   "version": "2.0.0",
-  "description": "A small React utility for building responsive one-line lists that keep fitting items visible and tuck the rest behind a customizable disclosure.",
+  "description": "A headless React utility for single-line lists that automatically hides overflowing items behind a customizable \u201c+N\u201d disclosure.",
   "keywords": [
     "react",
     "fit-list",

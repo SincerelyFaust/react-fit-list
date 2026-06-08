@@ -8,7 +8,7 @@
 
 📦 **npm:** https://www.npmjs.com/package/react-fit-list
 
-`react-fit-list` is a small React utility for building one-line lists that adapt to the available width. It keeps the items that fit in view and moves the rest behind a disclosure control you can render as a count, button, menu trigger, or anything else your UI needs.
+`react-fit-list` is a headless React utility for single-line lists that automatically hides overflowing items behind a customizable “+N” disclosure.
 
 It ships with:
 
