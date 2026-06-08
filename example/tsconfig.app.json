@@ -8,7 +8,7 @@
     "types": ["vite/client"],
     "skipLibCheck": true,
     "paths": {
-      "react-fit-list": ["../../src/index.ts"]
+      "react-fit-list": ["../src/index.ts"]
     },
 
     "moduleResolution": "bundler",

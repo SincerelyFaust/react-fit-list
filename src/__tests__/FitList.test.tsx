@@ -1,6 +1,6 @@
 import React from "react";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { FitList } from "../components/FitList";
 
 const originalClientWidth = Object.getOwnPropertyDescriptor(
@@ -35,11 +35,11 @@ describe("FitList", () => {
     render(
       <FitList
         items={["Security", "Startups"]}
-        getKey={(item) => item}
+        getItemKey={(item) => item}
         renderItem={(item) => <span>{item}</span>}
-        measurementMode="estimate"
-        estimatedItemWidth={80}
-        reserveOverflowSpace={false}
+        measurementMode="estimated"
+        estimateItemWidth={80}
+        reserveDisclosureSpace={false}
       />
     );
 
@@ -51,7 +51,7 @@ describe("FitList", () => {
     render(
       <FitList
         items={[] as string[]}
-        getKey={(item) => item}
+        getItemKey={(item) => item}
         renderItem={(item) => <span>{item}</span>}
         emptyFallback={<span>—</span>}
       />
@@ -60,33 +60,33 @@ describe("FitList", () => {
     expect(screen.getByText("—")).toBeTruthy();
   });
 
-  it("keeps the overflow at the row end by default", () => {
+  it("keeps the disclosure at the row end by default", () => {
     const { container } = render(
       <FitList
         items={["A", "B", "C", "D"]}
-        getKey={(item) => item}
+        getItemKey={(item) => item}
         renderItem={(item) => <span>{item}</span>}
-        measurementMode="estimate"
-        estimatedItemWidth={80}
-        overflowWidth={40}
-        collapseFrom="start"
+        measurementMode="estimated"
+        estimateItemWidth={80}
+        disclosureWidth={40}
+        trimFrom="start"
       />
     );
 
     expect(container.firstElementChild?.textContent).toBe("CD+2");
   });
 
-  it("lets trailing overflow hug the closest visible item", () => {
+  it("lets the trailing disclosure sit next to the visible items", () => {
     const { container } = render(
       <FitList
         items={["A", "B", "C", "D"]}
-        getKey={(item) => item}
+        getItemKey={(item) => item}
         renderItem={(item) => <span>{item}</span>}
-        measurementMode="estimate"
-        estimatedItemWidth={80}
-        overflowWidth={40}
-        collapseFrom="end"
-        overflowPlacement="closest"
+        measurementMode="estimated"
+        estimateItemWidth={80}
+        disclosureWidth={40}
+        trimFrom="end"
+        disclosurePlacement="adjacent"
       />
     );
 
@@ -97,20 +97,101 @@ describe("FitList", () => {
     expect(itemsRow.style.flex).toBe("0 1 auto");
   });
 
-  it("can place the overflow next to the hidden segment", () => {
+  it("can place the disclosure next to the hidden segment", () => {
     const { container } = render(
       <FitList
         items={["A", "B", "C", "D"]}
-        getKey={(item) => item}
+        getItemKey={(item) => item}
         renderItem={(item) => <span>{item}</span>}
-        measurementMode="estimate"
-        estimatedItemWidth={80}
-        overflowWidth={40}
-        collapseFrom="start"
-        overflowPlacement="closest"
+        measurementMode="estimated"
+        estimateItemWidth={80}
+        disclosureWidth={40}
+        trimFrom="start"
+        disclosurePlacement="adjacent"
       />
     );
 
     expect(container.firstElementChild?.textContent).toBe("+2CD");
   });
+
+  it("honors maxVisibleItems before measuring available space", () => {
+    const { container } = render(
+      <FitList
+        items={["A", "B", "C", "D"]}
+        getItemKey={(item) => item}
+        renderItem={(item) => <span>{item}</span>}
+        measurementMode="estimated"
+        estimateItemWidth={20}
+        disclosureWidth={40}
+        maxVisibleItems={2}
+      />
+    );
+
+    expect(container.firstElementChild?.textContent).toBe("AB+2");
+  });
+
+  it("keeps the disclosure available after opening so the list can close again", () => {
+    render(
+      <FitList
+        items={["A", "B", "C", "D"]}
+        getItemKey={(item) => item}
+        renderItem={(item) => <span>{item}</span>}
+        measurementMode="estimated"
+        estimateItemWidth={80}
+        disclosureWidth={40}
+      />
+    );
+
+    const button = screen.getByRole("button", { name: "Show 2 more items" });
+    fireEvent.click(button);
+
+    expect(screen.getByRole("button", { name: "Show fewer items" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Show fewer items" }));
+
+    expect(screen.getByRole("button", { name: "Show 2 more items" })).toBeTruthy();
+  });
+
+  it("passes root, list, item, and disclosure wrapper props through", () => {
+    render(
+      <FitList
+        items={["A", "B", "C", "D"]}
+        getItemKey={(item) => item}
+        renderItem={(item) => <span>{item}</span>}
+        measurementMode="estimated"
+        estimateItemWidth={80}
+        disclosureWidth={40}
+        rootProps={{ role: "list", "aria-label": "Tags" }}
+        listProps={{ title: "fit-list-items" }}
+        itemProps={{ role: "listitem" }}
+        disclosureWrapperProps={{ title: "fit-list-disclosure" }}
+      />
+    );
+
+    expect(screen.getByRole("list", { name: "Tags" })).toBeTruthy();
+    expect(screen.getByTitle("fit-list-items")).toBeTruthy();
+    expect(screen.getAllByRole("listitem")).toHaveLength(2);
+    expect(screen.getByTitle("fit-list-disclosure")).toBeTruthy();
+  });
+
+  it("uses a custom disclosure width measurement callback", () => {
+    const { container } = render(
+      <FitList
+        items={["A", "B", "C", "D"]}
+        getItemKey={(item) => item}
+        renderItem={(item) => <span>{item}</span>}
+        renderDisclosure={({ hiddenCount, toggleOpen }) => (
+          <button type="button" onClick={toggleOpen}>
+            Show {hiddenCount} more
+          </button>
+        )}
+        measurementMode="estimated"
+        estimateItemWidth={80}
+        measureDisclosureWidth={(hiddenCount) => (hiddenCount > 1 ? 100 : 40)}
+      />
+    );
+
+    expect(container.firstElementChild?.textContent).toBe("AShow 3 more");
+  });
+
 });

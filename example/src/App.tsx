@@ -1,11 +1,27 @@
 import { useEffect, useRef, useState } from "react";
 import { FitList } from "react-fit-list";
-import type { FitListOverflowRenderArgs } from "react-fit-list";
+import type { FitListDisclosureRenderArgs } from "react-fit-list";
 import "./App.css";
 import { FaGithub } from "react-icons/fa";
 import { SiNpm } from "react-icons/si";
 
 type Item = {
+  id: number;
+  label: string;
+};
+
+type Breadcrumb = {
+  id: number;
+  label: string;
+};
+
+type Recipient = {
+  id: number;
+  name: string;
+  initials: string;
+};
+
+type Filter = {
   id: number;
   label: string;
 };
@@ -28,18 +44,44 @@ const items: Item[] = [
   { id: 6, label: "Design Systems" },
 ];
 
+const breadcrumbs: Breadcrumb[] = [
+  { id: 1, label: "Dashboard" },
+  { id: 2, label: "Projects" },
+  { id: 3, label: "Acme Redesign" },
+  { id: 4, label: "Design System" },
+  { id: 5, label: "Components" },
+  { id: 6, label: "Navigation" },
+];
+
+const recipients: Recipient[] = [
+  { id: 1, name: "Mia Chen", initials: "MC" },
+  { id: 2, name: "Noah Patel", initials: "NP" },
+  { id: 3, name: "Ada Smith", initials: "AS" },
+  { id: 4, name: "Leo Garcia", initials: "LG" },
+  { id: 5, name: "Iva Novak", initials: "IN" },
+  { id: 6, name: "Sam Wilson", initials: "SW" },
+];
+
+const filters: Filter[] = [
+  { id: 1, label: "Open" },
+  { id: 2, label: "Assigned to me" },
+  { id: 3, label: "High priority" },
+  { id: 4, label: "Needs review" },
+  { id: 5, label: "This week" },
+];
+
 const githubUrl =
   "https://github.com/SincerelyFaust/react-fit-list?tab=readme-ov-file";
 const npmUrl = "https://www.npmjs.com/package/react-fit-list";
-const DESKTOP_FRAME_WIDTH = 360;
-const MOBILE_FRAME_MIN_WIDTH = 220;
+const DESKTOP_FRAME_WIDTH = 520;
+const MOBILE_FRAME_MIN_WIDTH = 260;
 
 function Tag({ children }: { children: React.ReactNode }) {
   return <span className="tag">{children}</span>;
 }
 
 function App() {
-  const [frameWidth, setFrameWidth] = useState(320);
+  const [frameWidth, setFrameWidth] = useState(420);
   const [mobileFrameWidth, setMobileFrameWidth] = useState(DESKTOP_FRAME_WIDTH);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [popover, setPopover] = useState<PopoverState | null>(null);
@@ -69,7 +111,15 @@ function App() {
     if (!frame) return;
 
     const updateWidth = () => {
-      setFrameWidth(Math.round(frame.getBoundingClientRect().width));
+      const nextWidth = Math.round(frame.getBoundingClientRect().width);
+
+      setFrameWidth((currentWidth) => {
+        if (currentWidth !== nextWidth) {
+          setPopover(null);
+        }
+
+        return nextWidth;
+      });
     };
 
     updateWidth();
@@ -185,13 +235,12 @@ function App() {
     };
   }, [popover]);
 
-  const openOverflowPopover = (
-    args: FitListOverflowRenderArgs<Item>,
+  const openDisclosurePopover = (
+    args: FitListDisclosureRenderArgs<Item>,
     event: React.MouseEvent<HTMLElement>
   ) => {
-    const frame = frameRef.current;
     const frameShell = frameShellRef.current;
-    if (!frame || !frameShell) return;
+    if (!frameShell) return;
 
     const triggerRect = event.currentTarget.getBoundingClientRect();
     const frameRect = frameShell.getBoundingClientRect();
@@ -237,8 +286,8 @@ function App() {
               <span className="package-name">react-fit-list</span>
             </h1>
             <p className="description">
-              A headless React component for rendering a single-line list that
-              collapses overflowing items into a <code>+N</code> indicator.
+              A headless React utility for responsive lists that collapse
+              overflowing items into a customizable disclosure.
             </p>
           </div>
 
@@ -264,16 +313,16 @@ function App() {
           </div>
         </section>
 
-        <section className="panel">
+        <section className="panel showcase-panel">
           <div className="panel-header">
             <div className="frame-meta">
-              <span>Try the component</span>
+              <span>Responsive list showcase</span>
               <span className="width-value">{frameWidth}px</span>
             </div>
             <p className="panel-description">
               {isMobileViewport
-                ? "Use the slider to preview how the list behaves at smaller widths."
-                : "Drag the resize handle to test how the list fits and when the overflow button appears."}
+                ? "Use the slider to preview the same UIs at different widths."
+                : "Drag the resize handle to see every pattern respond to the same available width."}
             </p>
           </div>
 
@@ -305,7 +354,7 @@ function App() {
                       mobileFrameWidth,
                       mobileSliderMax
                     )}px)`
-                  : "min(100%, 360px)",
+                  : "min(100%, 520px)",
               }}
             >
               <div className="frame-toolbar" aria-hidden="true">
@@ -314,16 +363,147 @@ function App() {
                 <span />
               </div>
 
-              <FitList
-                items={items}
-                getKey={(item) => item.id}
-                gap={8}
-                className="fitlist"
-                overflowClassName="more"
-                renderItem={(item) => <Tag>{item.label}</Tag>}
-                renderOverflow={({ hiddenCount }) => <>{`+${hiddenCount}`}</>}
-                onOverflowClick={openOverflowPopover}
-              />
+              <div className="showcase-stack">
+                <article className="showcase-row showcase-row-featured">
+                  <div className="row-header">
+                    <h2>Tags</h2>
+                    <p>Custom disclosure with a popover for hidden items.</p>
+                  </div>
+                  <FitList
+                    items={items}
+                    getItemKey={(item) => item.id}
+                    spacing={8}
+                    className="fitlist"
+                    renderItem={(item) => <Tag>{item.label}</Tag>}
+                    renderDisclosure={(args) => (
+                      <button
+                        className="more"
+                        type="button"
+                        onClick={(event) => openDisclosurePopover(args, event)}
+                        aria-haspopup="dialog"
+                        aria-expanded={popover !== null}
+                        aria-label={`Show ${args.hiddenCount} hidden tags`}
+                      >
+                        +{args.hiddenCount}
+                      </button>
+                    )}
+                  />
+                </article>
+
+                <article className="showcase-row">
+                  <div className="row-header">
+                    <h2>Breadcrumbs</h2>
+                    <p>Trim from the start and keep the current page visible.</p>
+                  </div>
+                  <FitList
+                    items={breadcrumbs}
+                    getItemKey={(item) => item.id}
+                    trimFrom="start"
+                    disclosurePlacement="adjacent"
+                    spacing={6}
+                    className="breadcrumb-list"
+                    itemClassName="breadcrumb-item"
+                    renderItem={(item, index) => (
+                      <span className="breadcrumb-segment">
+                        {index > 0 ? <span aria-hidden="true">/</span> : null}
+                        <span>{item.label}</span>
+                      </span>
+                    )}
+                    renderDisclosure={({ hiddenCount }) => (
+                      <button
+                        type="button"
+                        className="breadcrumb-disclosure"
+                        aria-label={`${hiddenCount} earlier breadcrumbs hidden`}
+                      >
+                        …
+                      </button>
+                    )}
+                  />
+                </article>
+
+                <article className="showcase-row">
+                  <div className="row-header">
+                    <h2>Recipients</h2>
+                    <p>Estimated widths work well for avatar-like items.</p>
+                  </div>
+                  <FitList
+                    items={recipients}
+                    getItemKey={(item) => item.id}
+                    measurementMode="estimated"
+                    estimateItemWidth={46}
+                    disclosureWidth={46}
+                    spacing={-8}
+                    className="recipient-list"
+                    renderItem={(item) => (
+                      <span className="avatar" title={item.name}>
+                        {item.initials}
+                      </span>
+                    )}
+                    renderDisclosure={({ hiddenCount, toggleOpen, isOpen }) => (
+                      <button
+                        type="button"
+                        className="avatar avatar-more"
+                        onClick={toggleOpen}
+                        aria-expanded={isOpen}
+                        aria-label={
+                          isOpen
+                            ? "Show fewer recipients"
+                            : `Show ${hiddenCount} more recipients`
+                        }
+                      >
+                        {isOpen ? "−" : `+${hiddenCount}`}
+                      </button>
+                    )}
+                  />
+                </article>
+
+                <article className="showcase-row">
+                  <div className="row-header">
+                    <h2>Filters</h2>
+                    <p>Use the default disclosure when a simple +N is enough.</p>
+                  </div>
+                  <FitList
+                    items={filters}
+                    getItemKey={(item) => item.id}
+                    spacing={8}
+                    className="filter-list"
+                    disclosureClassName="default-more"
+                    renderItem={(item) => (
+                      <span className="filter-chip">{item.label}</span>
+                    )}
+                  />
+                </article>
+
+                <article className="showcase-row">
+                  <div className="row-header">
+                    <h2>Maximum visible</h2>
+                    <p>Cap the closed list even when more items would fit.</p>
+                  </div>
+                  <FitList
+                    items={items}
+                    getItemKey={(item) => item.id}
+                    maxVisibleItems={3}
+                    spacing={8}
+                    className="fitlist"
+                    renderItem={(item) => <Tag>{item.label}</Tag>}
+                    renderDisclosure={({ hiddenCount, toggleOpen, isOpen }) => (
+                      <button
+                        type="button"
+                        className="more"
+                        onClick={toggleOpen}
+                        aria-expanded={isOpen}
+                        aria-label={
+                          isOpen
+                            ? "Show fewer tags"
+                            : `Show ${hiddenCount} more tags`
+                        }
+                      >
+                        {isOpen ? "Show less" : `+${hiddenCount}`}
+                      </button>
+                    )}
+                  />
+                </article>
+              </div>
             </div>
 
             {popover && (

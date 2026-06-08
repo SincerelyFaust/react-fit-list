@@ -7,10 +7,10 @@
 export { FitList } from "./components/FitList";
 export { useFitList } from "./hooks/useFitList";
 export type {
-  CollapseFrom,
-  OverflowPlacement,
+  TrimFrom,
+  DisclosurePlacement,
   FitListMeasurementMode,
-  FitListOverflowRenderArgs,
+  FitListDisclosureRenderArgs,
   FitListProps,
   UseFitListOptions,
   UseFitListResult,
