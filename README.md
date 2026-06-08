@@ -173,17 +173,14 @@ const fit = useFitList({
 | `visibleItems` | `T[]` | Items currently visible in the rendered row. When open, this contains all items. |
 | `hiddenItems` | `T[]` | Items currently hidden in the rendered row. When open, this is empty. |
 | `hiddenCount` | `number` | Number of currently hidden rendered items. When open, this is `0`. |
-| `visibleCount` | `number` | Number of currently visible rendered items. |
 | `closedVisibleItems` | `T[]` | Items that fit while the list is closed. |
 | `closedHiddenItems` | `T[]` | Items that overflow while the list is closed. |
-| `closedVisibleCount` | `number` | Number of items that fit while the list is closed. |
 | `closedHiddenCount` | `number` | Number of items that overflow while the list is closed. |
 | `isOverflowing` | `boolean` | Whether the closed list has overflow items. |
 | `isOpen` | `boolean` | Whether the list is open. |
 | `setOpen` | `(open: boolean) => void` | Sets open state directly. |
 | `toggleOpen` | `() => void` | Toggles open state. |
 | `recompute` | `() => void` | Re-runs the fit calculation immediately using current measurements. |
-| `scheduleRecompute` | `() => void` | Schedules a recompute on the next animation frame, cancelling any pending frame. |
 
 
 ## Accessibility and semantic markup

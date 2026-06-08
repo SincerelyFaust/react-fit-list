@@ -118,14 +118,10 @@ export type UseFitListResult<T> = {
   hiddenItems: T[];
   /** Number of items currently hidden while the list is rendered. `0` when open. */
   hiddenCount: number;
-  /** Number of items currently visible in the rendered list. */
-  visibleCount: number;
   /** Items that fit while the list is closed. */
   closedVisibleItems: T[];
   /** Items that overflow while the list is closed. */
   closedHiddenItems: T[];
-  /** Number of items that fit while the list is closed. */
-  closedVisibleCount: number;
   /** Number of items that overflow while the list is closed. */
   closedHiddenCount: number;
   /** Whether the closed list has overflow items. */
@@ -138,8 +134,6 @@ export type UseFitListResult<T> = {
   toggleOpen: () => void;
   /** Forces the hook to recompute visibility using current measurements. */
   recompute: () => void;
-  /** Schedules a recompute on the next animation frame, cancelling any pending frame. */
-  scheduleRecompute: () => void;
 };
 
 /**

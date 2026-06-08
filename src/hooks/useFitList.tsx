@@ -178,7 +178,7 @@ export function useFitList<T>({
     reserveDisclosureSpace,
   ]);
 
-  const scheduleRecompute = useCallback(() => {
+  const requestRecompute = useCallback(() => {
     if (typeof window === "undefined") {
       compute();
       return;
@@ -202,7 +202,7 @@ export function useFitList<T>({
     const container = containerRef.current;
     if (!container || typeof ResizeObserver === "undefined") return;
 
-    const observer = new ResizeObserver(scheduleRecompute);
+    const observer = new ResizeObserver(requestRecompute);
 
     observer.observe(container);
     return () => {
@@ -212,13 +212,13 @@ export function useFitList<T>({
         animationFrameRef.current = null;
       }
     };
-  }, [scheduleRecompute]);
+  }, [requestRecompute]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    window.addEventListener("resize", scheduleRecompute);
-    return () => window.removeEventListener("resize", scheduleRecompute);
-  }, [scheduleRecompute]);
+    window.addEventListener("resize", requestRecompute);
+    return () => window.removeEventListener("resize", requestRecompute);
+  }, [requestRecompute]);
 
   const registerItem = useCallback(
     (key: React.Key) => (node: HTMLElement | null) => {
@@ -280,16 +280,13 @@ export function useFitList<T>({
     visibleItems: visibleItems as T[],
     hiddenItems: hiddenItems as T[],
     hiddenCount: hiddenItems.length,
-    visibleCount: visibleItems.length,
     closedVisibleItems: closedVisibleItems as T[],
     closedHiddenItems: closedHiddenItems as T[],
-    closedVisibleCount: closedVisibleItems.length,
     closedHiddenCount: closedHiddenItems.length,
     isOverflowing: closedHiddenItems.length > 0,
     isOpen,
     setOpen,
     toggleOpen,
     recompute: compute,
-    scheduleRecompute,
   };
 }
