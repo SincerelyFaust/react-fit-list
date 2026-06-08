@@ -14,7 +14,8 @@
     "noEmit": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
-    "types": ["vitest/globals"]
+    "types": ["vitest/globals"],
+    "ignoreDeprecations": "6.0"
   },
   "include": ["src", "vitest.config.ts"]
 }
