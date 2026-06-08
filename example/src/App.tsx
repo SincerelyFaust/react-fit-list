@@ -111,7 +111,15 @@ function App() {
     if (!frame) return;
 
     const updateWidth = () => {
-      setFrameWidth(Math.round(frame.getBoundingClientRect().width));
+      const nextWidth = Math.round(frame.getBoundingClientRect().width);
+
+      setFrameWidth((currentWidth) => {
+        if (currentWidth !== nextWidth) {
+          setPopover(null);
+        }
+
+        return nextWidth;
+      });
     };
 
     updateWidth();
