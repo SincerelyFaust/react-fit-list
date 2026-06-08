@@ -8,7 +8,7 @@
 
 📦 **npm:** https://www.npmjs.com/package/react-fit-list
 
-`react-fit-list` is a headless React utility for single-line lists that automatically hides overflowing items behind a customizable “+N” disclosure.
+`react-fit-list` is a headless React component and hook for responsive single-line lists, tags, chips, breadcrumbs, and recipient lists that collapse overflowing items into a customizable “+N” disclosure.
 
 It ships with:
 
@@ -77,6 +77,10 @@ Use the component when you want the library to handle the layout, hidden measure
 | `listClassName` | `string` | — | Class applied to the visible-items wrapper. |
 | `itemClassName` | `string` | — | Class applied to each visible item wrapper. |
 | `disclosureClassName` | `string` | — | Class applied to the default disclosure button. |
+| `rootProps` | `HTMLAttributes<HTMLDivElement>` | — | Props spread onto the root container. Useful for roles, labels, data attributes, and event handlers. |
+| `listProps` | `HTMLAttributes<HTMLDivElement>` | — | Props spread onto the visible-items wrapper. |
+| `itemProps` | `HTMLAttributes<HTMLDivElement> \| ((item, index) => HTMLAttributes<HTMLDivElement>)` | — | Props spread onto each visible item wrapper. |
+| `disclosureWrapperProps` | `HTMLAttributes<HTMLDivElement>` | — | Props spread onto the disclosure wrapper. |
 | `sizerClassName` | `string` | `itemClassName` | Class applied to hidden measurement nodes when sizing depends on matching CSS. |
 | `emptyFallback` | `React.ReactNode` | `null` | Content rendered when `items` is empty. |
 | `spacing` | `number` | `8` | Space between items and the disclosure. |
@@ -100,13 +104,16 @@ Use the component when you want the library to handle the layout, hidden measure
   hiddenCount: number
   hiddenItems: T[]
   visibleItems: T[]
+  closedVisibleItems: T[]
+  closedHiddenItems: T[]
+  isOverflowing: boolean
   isOpen: boolean
   setOpen: (open: boolean) => void
   toggleOpen: () => void
 }
 ```
 
-A custom disclosure can render its own button and event handling:
+A custom disclosure can render its own button and event handling. `hiddenCount` and `hiddenItems` describe the closed overflow segment, so they stay available even while the list is open:
 
 ```tsx
 <FitList
@@ -163,16 +170,58 @@ const fit = useFitList({
 | `registerItem` | `(key) => (node) => void` | Registers visible item nodes for measurement. |
 | `registerMeasureItem` | `(key) => (node) => void` | Registers hidden measurement nodes. |
 | `registerDisclosure` | `(node) => void` | Registers the disclosure node. |
-| `visibleItems` | `T[]` | Items currently visible in the closed row. |
-| `hiddenItems` | `T[]` | Items currently hidden behind the disclosure. |
-| `hiddenCount` | `number` | Number of hidden items. |
+| `visibleItems` | `T[]` | Items currently visible in the rendered row. When open, this contains all items. |
+| `hiddenItems` | `T[]` | Items currently hidden in the rendered row. When open, this is empty. |
+| `hiddenCount` | `number` | Number of currently hidden rendered items. When open, this is `0`. |
+| `visibleCount` | `number` | Number of currently visible rendered items. |
+| `closedVisibleItems` | `T[]` | Items that fit while the list is closed. |
+| `closedHiddenItems` | `T[]` | Items that overflow while the list is closed. |
+| `closedVisibleCount` | `number` | Number of items that fit while the list is closed. |
+| `closedHiddenCount` | `number` | Number of items that overflow while the list is closed. |
+| `isOverflowing` | `boolean` | Whether the closed list has overflow items. |
 | `isOpen` | `boolean` | Whether the list is open. |
 | `setOpen` | `(open: boolean) => void` | Sets open state directly. |
 | `toggleOpen` | `() => void` | Toggles open state. |
-| `recompute` | `() => void` | Re-runs the fit calculation using current measurements. |
+| `recompute` | `() => void` | Re-runs the fit calculation immediately using current measurements. |
+| `scheduleRecompute` | `() => void` | Schedules a recompute on the next animation frame, cancelling any pending frame. |
+
+
+## Accessibility and semantic markup
+
+`FitList` is headless and does not force list semantics, but you can add them with pass-through props:
+
+```tsx
+<FitList
+  items={items}
+  getItemKey={(item) => item.id}
+  renderItem={(item) => <Tag>{item.label}</Tag>}
+  rootProps={{ role: 'list', 'aria-label': 'Selected filters' }}
+  itemProps={{ role: 'listitem' }}
+/>
+```
+
+The default disclosure is a button with `aria-expanded` and an accessible label. It renders `+N` while closed and `Show less` while open.
+
+## Choosing a measurement mode
+
+Use `measurementMode="actual"` when item widths depend on text, fonts, or CSS. This is the most accurate option and uses hidden measurement nodes.
+
+Use `measurementMode="estimated"` when you know roughly how wide items are and want cheaper calculations:
+
+```tsx
+<FitList
+  items={items}
+  getItemKey={(item) => item.id}
+  renderItem={(item) => <Tag>{item.label}</Tag>}
+  measurementMode="estimated"
+  estimateItemWidth={(item) => item.label.length * 8 + 24}
+/>
+```
+
+## SSR and hydration
+
+On the server, `react-fit-list` renders from the data you provide and measures after hydration in the browser. Use `measurementMode="estimated"` with `estimateItemWidth` when you prefer predictable first-pass sizing over DOM measurement.
 
 ## Notes
 
 The component renders a visually hidden measurement tree so item widths can be calculated without changing the visible layout. Keep `renderItem` deterministic and use `sizerClassName` when your item width depends on CSS classes that are not already applied through `itemClassName`.
-
-On the server, `react-fit-list` renders from the data you provide and measures after hydration in the browser. Use `measurementMode="estimated"` with `estimateItemWidth` when you prefer predictable first-pass sizing over DOM measurement.

@@ -52,6 +52,9 @@ describe("useFitList", () => {
     expect(result.current.visibleItems).toEqual(["A", "B"]);
     expect(result.current.hiddenItems).toEqual(["C", "D"]);
     expect(result.current.hiddenCount).toBe(2);
+    expect(result.current.closedVisibleItems).toEqual(["A", "B"]);
+    expect(result.current.closedHiddenItems).toEqual(["C", "D"]);
+    expect(result.current.isOverflowing).toBe(true);
   });
 
   it("respects reserveDisclosureSpace even when everything fits", () => {
@@ -138,5 +141,45 @@ describe("useFitList", () => {
     expect(result.current.isOpen).toBe(true);
     expect(result.current.visibleItems).toEqual(["A", "B", "C"]);
     expect(result.current.hiddenItems).toEqual([]);
+  });
+
+  it("keeps closed overflow details available while open", () => {
+    const { result, rerender } = renderHook(
+      ({ open }: { open?: boolean }) =>
+        useFitList({
+          items: ["A", "B", "C", "D"],
+          getItemKey: (item) => item,
+          measurementMode: "estimated",
+          estimateItemWidth: 80,
+          disclosureWidth: 40,
+          open,
+        }),
+      {
+        initialProps: { open: false },
+      }
+    );
+
+    const container = document.createElement("div");
+    result.current.containerRef.current = container;
+
+    act(() => {
+      result.current.recompute();
+    });
+
+    expect(result.current.closedHiddenItems).toEqual(["C", "D"]);
+    expect(result.current.closedHiddenCount).toBe(2);
+    expect(result.current.isOverflowing).toBe(true);
+
+    rerender({ open: true });
+
+    act(() => {
+      result.current.recompute();
+    });
+
+    expect(result.current.visibleItems).toEqual(["A", "B", "C", "D"]);
+    expect(result.current.hiddenItems).toEqual([]);
+    expect(result.current.hiddenCount).toBe(0);
+    expect(result.current.closedHiddenItems).toEqual(["C", "D"]);
+    expect(result.current.closedHiddenCount).toBe(2);
   });
 });

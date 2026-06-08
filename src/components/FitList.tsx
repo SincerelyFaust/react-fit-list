@@ -2,14 +2,27 @@ import * as React from "react";
 import { useFitList } from "../hooks/useFitList";
 import type { FitListDisclosureRenderArgs, FitListProps } from "../types";
 
+function mergeClassNames(...classNames: Array<string | undefined>) {
+  return classNames.filter(Boolean).join(" ") || undefined;
+}
+
 function defaultDisclosure({
   hiddenCount,
   isOpen,
   toggleOpen,
 }: FitListDisclosureRenderArgs<unknown>) {
+  const label = isOpen
+    ? "Show fewer items"
+    : `Show ${hiddenCount} more item${hiddenCount === 1 ? "" : "s"}`;
+
   return (
-    <button type="button" onClick={toggleOpen} aria-expanded={isOpen}>
-      +{hiddenCount}
+    <button
+      type="button"
+      onClick={toggleOpen}
+      aria-expanded={isOpen}
+      aria-label={label}
+    >
+      {isOpen ? "Show less" : `+${hiddenCount}`}
     </button>
   );
 }
@@ -38,6 +51,10 @@ export function FitList<T>({
   listClassName,
   itemClassName,
   disclosureClassName,
+  rootProps,
+  listProps,
+  itemProps,
+  disclosureWrapperProps,
   sizerClassName,
   emptyFallback = null,
   spacing = 8,
@@ -54,24 +71,28 @@ export function FitList<T>({
 }: FitListProps<T>) {
   const disclosureMeasureRef = React.useRef<HTMLSpanElement | null>(null);
   const isDefaultDisclosureRenderer = renderDisclosure === defaultDisclosure;
+  const normalizedSpacing =
+    typeof spacing === "number" && Number.isFinite(spacing)
+      ? Math.max(0, spacing)
+      : 8;
 
   const measureDisclosureWidth = React.useCallback(
     (hiddenCount: number) => {
-      if (typeof disclosureWidth === "number") return disclosureWidth;
+      if (typeof disclosureWidth === "number" && Number.isFinite(disclosureWidth)) {
+        return Math.max(0, disclosureWidth);
+      }
+
       const node = disclosureMeasureRef.current;
       if (!node) return 44;
 
       // The default disclosure label changes width with the hidden count, so we
-      // temporarily swap its text content to measure the exact width needed.
+      // temporarily update this dedicated hidden text node. This avoids mutating
+      // the visible React-rendered button markup.
       if (isDefaultDisclosureRenderer) {
-        const previous = node.textContent;
         node.textContent = `+${hiddenCount}`;
-        const width = node.offsetWidth;
-        node.textContent = previous;
-        return width;
       }
 
-      return node.offsetWidth;
+      return Math.max(0, node.offsetWidth || 44);
     },
     [isDefaultDisclosureRenderer, disclosureWidth]
   );
@@ -82,15 +103,17 @@ export function FitList<T>({
     registerMeasureItem,
     registerDisclosure,
     visibleItems,
-    hiddenItems,
-    hiddenCount,
+    closedVisibleItems,
+    closedHiddenItems,
+    closedHiddenCount,
+    isOverflowing,
     isOpen,
     setOpen,
     toggleOpen,
   } = useFitList({
     items,
     getItemKey,
-    spacing,
+    spacing: normalizedSpacing,
     trimFrom,
     maxVisibleItems,
     reserveDisclosureSpace,
@@ -112,15 +135,15 @@ export function FitList<T>({
 
     if (trimFrom === "end") {
       return items
-        .slice(0, visibleItems.length)
+        .slice(0, closedVisibleItems.length)
         .map((item, index) => ({ item, index }));
     }
 
-    const startIndex = items.length - visibleItems.length;
+    const startIndex = items.length - closedVisibleItems.length;
     return items
       .slice(startIndex)
       .map((item, index) => ({ item, index: startIndex + index }));
-  }, [trimFrom, isOpen, items, visibleItems.length]);
+  }, [trimFrom, isOpen, items, closedVisibleItems.length]);
 
   // Avoid mounting a second copy of a custom disclosure renderer in the hidden
   // measurement tree. Some interactive renderers (for example Radix popovers)
@@ -132,9 +155,12 @@ export function FitList<T>({
   }
 
   const disclosureArgs: FitListDisclosureRenderArgs<T> = {
-    hiddenCount,
-    hiddenItems: [...hiddenItems] as T[],
+    hiddenCount: closedHiddenCount,
+    hiddenItems: [...closedHiddenItems] as T[],
     visibleItems: [...visibleItems] as T[],
+    closedVisibleItems: [...closedVisibleItems] as T[],
+    closedHiddenItems: [...closedHiddenItems] as T[],
+    isOverflowing,
     isOpen,
     setOpen,
     toggleOpen,
@@ -144,51 +170,65 @@ export function FitList<T>({
   const disclosureControl =
     isDefaultDisclosureRenderer && React.isValidElement(disclosureChildren)
       ? React.cloneElement(disclosureChildren, {
-          className: disclosureClassName,
+          className: mergeClassNames(
+            disclosureClassName,
+            (disclosureChildren.props as { className?: string }).className
+          ),
         } as React.HTMLAttributes<HTMLElement>)
       : disclosureChildren;
 
   const isAdjacentDisclosure = disclosurePlacement === "adjacent" && !isOpen;
   const shouldPlaceDisclosureBeforeItems =
     isAdjacentDisclosure && trimFrom === "start";
+  const shouldRenderDisclosure = isOverflowing || reserveDisclosureSpace;
 
-  const disclosureNode = hiddenCount > 0 || reserveDisclosureSpace ? (
+  const disclosureNode = shouldRenderDisclosure ? (
     <div
+      {...disclosureWrapperProps}
       ref={registerDisclosure}
+      className={disclosureWrapperProps?.className}
       style={{
-        visibility: hiddenCount > 0 ? "visible" : "hidden",
+        visibility: isOverflowing ? "visible" : "hidden",
         flex: "0 0 auto",
         whiteSpace: "nowrap",
         display: "block",
+        ...disclosureWrapperProps?.style,
       }}
     >
-      {hiddenCount > 0 ? disclosureControl : <span aria-hidden="true">+0</span>}
+      {isOverflowing ? disclosureControl : <span aria-hidden="true">+0</span>}
     </div>
   ) : null;
 
   const itemsNode = (
     <div
-      className={listClassName}
+      {...listProps}
+      className={mergeClassNames(listClassName, listProps?.className)}
       style={{
         display: "flex",
         alignItems: "center",
-        gap: spacing,
+        gap: normalizedSpacing,
         minWidth: 0,
         flex: isAdjacentDisclosure ? "0 1 auto" : "1 1 auto",
         overflow: "hidden",
+        ...listProps?.style,
       }}
     >
       {visibleEntries.map(({ item, index }) => {
         const key = getItemKey(item, index);
+        const resolvedItemProps =
+          typeof itemProps === "function" ? itemProps(item, index) : itemProps;
+
         return (
           <div
+            {...resolvedItemProps}
             key={key}
             ref={registerItem(key)}
-            className={itemClassName}
+            className={mergeClassNames(itemClassName, resolvedItemProps?.className)}
             style={{
               minWidth: 0,
               flex: "0 0 auto",
               whiteSpace: "nowrap",
+              ...resolvedItemProps?.style,
             }}
           >
             {renderItem(item, index)}
@@ -201,14 +241,16 @@ export function FitList<T>({
   return (
     <>
       <div
+        {...rootProps}
         ref={containerRef}
-        className={className}
+        className={mergeClassNames(className, rootProps?.className)}
         style={{
           display: "flex",
           alignItems: "center",
-          gap: spacing,
+          gap: normalizedSpacing,
           minWidth: 0,
           whiteSpace: "nowrap",
+          ...rootProps?.style,
         }}
       >
         {shouldPlaceDisclosureBeforeItems ? disclosureNode : null}
@@ -224,15 +266,14 @@ export function FitList<T>({
         aria-hidden="true"
         style={{
           pointerEvents: "none",
-          position: "fixed",
-          top: 0,
-          left: 0,
-          zIndex: -1,
+          position: "absolute",
+          visibility: "hidden",
+          height: 0,
           overflow: "hidden",
-          opacity: 0,
+          whiteSpace: "nowrap",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: spacing }}>
+        <div style={{ display: "flex", alignItems: "center", gap: normalizedSpacing }}>
           {items.map((item, index) => {
             const key = getItemKey(item, index);
             return (
@@ -256,7 +297,7 @@ export function FitList<T>({
               className={disclosureClassName}
               style={{ display: "inline-flex", whiteSpace: "nowrap" }}
             >
-              {disclosureControl}
+              +{Math.max(0, closedHiddenCount)}
             </span>
           ) : null}
         </div>

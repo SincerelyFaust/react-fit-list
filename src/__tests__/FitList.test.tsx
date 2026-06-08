@@ -1,6 +1,6 @@
 import React from "react";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { FitList } from "../components/FitList";
 
 const originalClientWidth = Object.getOwnPropertyDescriptor(
@@ -128,5 +128,49 @@ describe("FitList", () => {
     );
 
     expect(container.firstElementChild?.textContent).toBe("AB+2");
+  });
+
+  it("keeps the disclosure available after opening so the list can close again", () => {
+    render(
+      <FitList
+        items={["A", "B", "C", "D"]}
+        getItemKey={(item) => item}
+        renderItem={(item) => <span>{item}</span>}
+        measurementMode="estimated"
+        estimateItemWidth={80}
+        disclosureWidth={40}
+      />
+    );
+
+    const button = screen.getByRole("button", { name: "Show 2 more items" });
+    fireEvent.click(button);
+
+    expect(screen.getByRole("button", { name: "Show fewer items" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Show fewer items" }));
+
+    expect(screen.getByRole("button", { name: "Show 2 more items" })).toBeTruthy();
+  });
+
+  it("passes root, list, item, and disclosure wrapper props through", () => {
+    render(
+      <FitList
+        items={["A", "B", "C", "D"]}
+        getItemKey={(item) => item}
+        renderItem={(item) => <span>{item}</span>}
+        measurementMode="estimated"
+        estimateItemWidth={80}
+        disclosureWidth={40}
+        rootProps={{ role: "list", "aria-label": "Tags" }}
+        listProps={{ title: "fit-list-items" }}
+        itemProps={{ role: "listitem" }}
+        disclosureWrapperProps={{ title: "fit-list-disclosure" }}
+      />
+    );
+
+    expect(screen.getByRole("list", { name: "Tags" })).toBeTruthy();
+    expect(screen.getByTitle("fit-list-items")).toBeTruthy();
+    expect(screen.getAllByRole("listitem")).toHaveLength(2);
+    expect(screen.getByTitle("fit-list-disclosure")).toBeTruthy();
   });
 });

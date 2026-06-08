@@ -1,19 +1,29 @@
 {
   "name": "react-fit-list",
   "version": "2.0.0",
-  "description": "A headless React utility for single-line lists that automatically hides overflowing items behind a customizable \u201c+N\u201d disclosure.",
+  "description": "Headless React component and hook for responsive single-line lists, tags, chips, breadcrumbs, and recipient lists that collapse overflowing items into a customizable “+N” disclosure.",
   "keywords": [
     "react",
     "fit-list",
     "responsive-list",
     "adaptive-list",
     "disclosure",
+    "overflow",
+    "collapse",
+    "collapsible",
+    "responsive",
+    "responsive-ui",
     "one-line-list",
+    "hidden-items",
+    "show-more",
     "chips",
     "tags",
     "breadcrumbs",
-    "typescript",
-    "ui"
+    "avatar-group",
+    "recipient-list",
+    "filter-chips",
+    "react-hook",
+    "typescript"
   ],
   "homepage": "https://sincerelyfaust.github.io/react-fit-list/",
   "repository": {
@@ -65,5 +75,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "prepublishOnly": "npm run typecheck && npm run test && npm run build"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

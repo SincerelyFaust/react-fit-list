@@ -30,12 +30,24 @@ export type FitListMeasurementMode = "actual" | "estimated";
  * used to reveal, preview, or list hidden items.
  */
 export type FitListDisclosureRenderArgs<T = unknown> = {
-  /** Number of items currently hidden because they do not fit. */
+  /**
+   * Number of items hidden in the closed list. This remains populated while
+   * open so disclosure controls can still show counts or close the list.
+   */
   hiddenCount: number;
-  /** Items currently hidden behind the disclosure. */
+  /**
+   * Items hidden in the closed list. This remains populated while open so
+   * menus/popovers can keep showing the overflow segment.
+   */
   hiddenItems: T[];
-  /** Items currently visible in the collapsed list. */
+  /** Items currently visible in the rendered list. */
   visibleItems: T[];
+  /** Items that fit while the list is closed. */
+  closedVisibleItems: T[];
+  /** Items that overflow while the list is closed. */
+  closedHiddenItems: T[];
+  /** Whether the closed list overflows. */
+  isOverflowing: boolean;
   /** Whether the list is currently open to reveal all items. */
   isOpen: boolean;
   /** Sets the open state directly. */
@@ -52,7 +64,7 @@ export type UseFitListOptions<T> = {
   items: readonly T[];
   /** Returns a stable React key for each item. */
   getItemKey: (item: T, index: number) => React.Key;
-  /** Horizontal spacing, in pixels, between items and the disclosure. */
+  /** Horizontal spacing, in pixels, between items and the disclosure. Negative values are clamped to `0`. */
   spacing?: number;
   /** Which side should be trimmed first when the content overflows. */
   trimFrom?: TrimFrom;
@@ -100,12 +112,24 @@ export type UseFitListResult<T> = {
   registerMeasureItem: (key: React.Key) => (node: HTMLElement | null) => void;
   /** Registers the disclosure node so its width can be measured. */
   registerDisclosure: (node: HTMLElement | null) => void;
-  /** Items currently visible in the closed list. */
+  /** Items currently visible in the rendered list. */
   visibleItems: T[];
-  /** Items currently hidden behind the disclosure. */
+  /** Items currently hidden while the list is rendered. Empty when open. */
   hiddenItems: T[];
-  /** Number of hidden items. */
+  /** Number of items currently hidden while the list is rendered. `0` when open. */
   hiddenCount: number;
+  /** Number of items currently visible in the rendered list. */
+  visibleCount: number;
+  /** Items that fit while the list is closed. */
+  closedVisibleItems: T[];
+  /** Items that overflow while the list is closed. */
+  closedHiddenItems: T[];
+  /** Number of items that fit while the list is closed. */
+  closedVisibleCount: number;
+  /** Number of items that overflow while the list is closed. */
+  closedHiddenCount: number;
+  /** Whether the closed list has overflow items. */
+  isOverflowing: boolean;
   /** Whether the list is currently open. */
   isOpen: boolean;
   /** Sets the open state directly. */
@@ -114,6 +138,8 @@ export type UseFitListResult<T> = {
   toggleOpen: () => void;
   /** Forces the hook to recompute visibility using current measurements. */
   recompute: () => void;
+  /** Schedules a recompute on the next animation frame, cancelling any pending frame. */
+  scheduleRecompute: () => void;
 };
 
 /**
@@ -139,6 +165,16 @@ export type FitListProps<T> = {
   itemClassName?: string;
   /** Class applied to the default disclosure button. */
   disclosureClassName?: string;
+  /** Props spread onto the root container. */
+  rootProps?: React.HTMLAttributes<HTMLDivElement>;
+  /** Props spread onto the visible-items wrapper. */
+  listProps?: React.HTMLAttributes<HTMLDivElement>;
+  /** Props spread onto each visible item wrapper. */
+  itemProps?:
+    | React.HTMLAttributes<HTMLDivElement>
+    | ((item: T, index: number) => React.HTMLAttributes<HTMLDivElement>);
+  /** Props spread onto the disclosure wrapper. */
+  disclosureWrapperProps?: React.HTMLAttributes<HTMLDivElement>;
   /**
    * Class applied to hidden measurement nodes. Use this when item sizing depends
    * on CSS classes and must match the rendered item styles.
@@ -146,7 +182,7 @@ export type FitListProps<T> = {
   sizerClassName?: string;
   /** Content rendered when `items` is empty. Defaults to `null`. */
   emptyFallback?: React.ReactNode;
-  /** Horizontal spacing, in pixels, between items and the disclosure. */
+  /** Horizontal spacing, in pixels, between items and the disclosure. Negative values are clamped to `0`. */
   spacing?: number;
   /** Which side should be trimmed first when there is not enough room. */
   trimFrom?: TrimFrom;
