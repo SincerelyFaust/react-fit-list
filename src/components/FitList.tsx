@@ -68,6 +68,7 @@ export function FitList<T>({
   open,
   defaultOpen = false,
   onOpenChange,
+  measureDisclosureWidth: measureCustomDisclosureWidth,
 }: FitListProps<T>) {
   const disclosureMeasureRef = React.useRef<HTMLSpanElement | null>(null);
   const isDefaultDisclosureRenderer = renderDisclosure === defaultDisclosure;
@@ -78,6 +79,13 @@ export function FitList<T>({
 
   const measureDisclosureWidth = React.useCallback(
     (hiddenCount: number) => {
+      if (measureCustomDisclosureWidth) {
+        const measuredWidth = measureCustomDisclosureWidth(hiddenCount);
+        return typeof measuredWidth === "number" && Number.isFinite(measuredWidth)
+          ? Math.max(0, measuredWidth)
+          : 44;
+      }
+
       if (typeof disclosureWidth === "number" && Number.isFinite(disclosureWidth)) {
         return Math.max(0, disclosureWidth);
       }
@@ -94,7 +102,7 @@ export function FitList<T>({
 
       return Math.max(0, node.offsetWidth || 44);
     },
-    [isDefaultDisclosureRenderer, disclosureWidth]
+    [isDefaultDisclosureRenderer, disclosureWidth, measureCustomDisclosureWidth]
   );
 
   const {
@@ -123,9 +131,10 @@ export function FitList<T>({
     open,
     defaultOpen,
     onOpenChange,
-    measureDisclosureWidth: isDefaultDisclosureRenderer
-      ? measureDisclosureWidth
-      : undefined,
+    measureDisclosureWidth:
+      isDefaultDisclosureRenderer || measureCustomDisclosureWidth
+        ? measureDisclosureWidth
+        : undefined,
   });
 
   const visibleEntries = React.useMemo(() => {

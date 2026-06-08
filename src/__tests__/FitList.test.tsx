@@ -173,4 +173,25 @@ describe("FitList", () => {
     expect(screen.getAllByRole("listitem")).toHaveLength(2);
     expect(screen.getByTitle("fit-list-disclosure")).toBeTruthy();
   });
+
+  it("uses a custom disclosure width measurement callback", () => {
+    const { container } = render(
+      <FitList
+        items={["A", "B", "C", "D"]}
+        getItemKey={(item) => item}
+        renderItem={(item) => <span>{item}</span>}
+        renderDisclosure={({ hiddenCount, toggleOpen }) => (
+          <button type="button" onClick={toggleOpen}>
+            Show {hiddenCount} more
+          </button>
+        )}
+        measurementMode="estimated"
+        estimateItemWidth={80}
+        measureDisclosureWidth={(hiddenCount) => (hiddenCount > 1 ? 100 : 40)}
+      />
+    );
+
+    expect(container.firstElementChild?.textContent).toBe("AShow 3 more");
+  });
+
 });

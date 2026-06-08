@@ -89,6 +89,7 @@ Use the component when you want the library to handle the layout, hidden measure
 | `maxVisibleItems` | `number` | — | Caps how many items may be shown while the list is closed, even when more items would fit. |
 | `reserveDisclosureSpace` | `boolean` | `false` | Reserve room for the disclosure even when everything fits. |
 | `disclosureWidth` | `number` | auto | Fixed disclosure width in pixels. Useful when the control size is known. |
+| `measureDisclosureWidth` | `(hiddenCount: number) => number` | — | Custom disclosure width measurement callback. Useful when a custom disclosure label changes size as the hidden count changes. |
 | `estimateItemWidth` | `number \| ((item, index) => number)` | fallback `96` | Width estimate used in `estimated` mode or before actual measurements are available. |
 | `measurementMode` | `'actual' \| 'estimated'` | `'actual'` | Width calculation strategy. |
 | `open` | `boolean` | uncontrolled | Controlled open state. |
@@ -203,7 +204,7 @@ The default disclosure is a button with `aria-expanded` and an accessible label.
 
 Use `measurementMode="actual"` when item widths depend on text, fonts, or CSS. This is the most accurate option and uses hidden measurement nodes.
 
-Use `measurementMode="estimated"` when you know roughly how wide items are and want cheaper calculations:
+Use `measurementMode="estimated"` when you know roughly how wide items are and want cheaper calculations. The fit calculation uses prefix sums internally, so recomputing which items fit is linear in the number of items instead of repeatedly summing visible slices:
 
 ```tsx
 <FitList

@@ -188,6 +188,11 @@ export type FitListProps<T> = {
   reserveDisclosureSpace?: boolean;
   /** Fixed disclosure width in pixels. */
   disclosureWidth?: number;
+  /**
+   * Optional callback used to measure a custom disclosure width for a given
+   * hidden count. Prefer `disclosureWidth` when the control size is fixed.
+   */
+  measureDisclosureWidth?: (hiddenCount: number) => number;
   /** Estimated item width used in `"estimated"` mode. */
   estimateItemWidth?: number | ((item: T, index: number) => number);
   /** Strategy used to determine widths. */

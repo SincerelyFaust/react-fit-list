@@ -115,43 +115,43 @@ export function useFitList<T>({
     );
     let nextVisible = largestAllowedCount;
 
-    // Walk down from the maximum allowed visible count until the row fits.
-    for (let count = largestAllowedCount; count >= 0; count -= 1) {
-      const hiddenCount = items.length - count;
-      const visibleWidths =
-        trimFrom === "end"
-          ? itemWidths.slice(0, count)
-          : itemWidths.slice(items.length - count);
+    const prefixWidths = [0];
+    for (const width of itemWidths) {
+      prefixWidths.push(prefixWidths[prefixWidths.length - 1] + width);
+    }
 
-      const itemsWidth = visibleWidths.reduce((sum, width) => sum + width, 0);
-      const itemsGap = count > 1 ? normalizedSpacing * (count - 1) : 0;
+    const getVisibleItemsWidth = (count: number) => {
+      if (count <= 0) return 0;
+      if (trimFrom === "end") return prefixWidths[count];
 
-      let currentDisclosureWidth = 0;
-      if (hiddenCount > 0) {
-        if (typeof normalizedDisclosureWidth === "number") {
-          currentDisclosureWidth = normalizedDisclosureWidth;
-        } else if (measureDisclosureWidth) {
-          currentDisclosureWidth = toNonNegativeNumber(
-            measureDisclosureWidth(hiddenCount),
-            44
-          );
-        } else {
-          currentDisclosureWidth = toNonNegativeNumber(
-            disclosureRef.current?.offsetWidth,
-            44
-          );
-        }
-      } else if (reserveDisclosureSpace) {
-        if (typeof normalizedDisclosureWidth === "number") {
-          currentDisclosureWidth = normalizedDisclosureWidth;
-        } else {
-          currentDisclosureWidth = toNonNegativeNumber(
-            disclosureRef.current?.offsetWidth,
-            44
-          );
-        }
+      const startIndex = items.length - count;
+      return prefixWidths[items.length] - prefixWidths[startIndex];
+    };
+
+    const getDisclosureWidth = (hiddenCount: number) => {
+      const needsDisclosure = hiddenCount > 0 || reserveDisclosureSpace;
+      if (!needsDisclosure) return 0;
+
+      if (typeof normalizedDisclosureWidth === "number") {
+        return normalizedDisclosureWidth;
       }
 
+      if (measureDisclosureWidth) {
+        return toNonNegativeNumber(measureDisclosureWidth(hiddenCount), 44);
+      }
+
+      return toNonNegativeNumber(disclosureRef.current?.offsetWidth, 44);
+    };
+
+    // Walk down from the maximum allowed visible count until the row fits.
+    // Prefix sums keep each candidate check O(1) instead of repeatedly slicing
+    // and reducing item widths. This makes recomputes scale linearly with the
+    // number of items.
+    for (let count = largestAllowedCount; count >= 0; count -= 1) {
+      const hiddenCount = items.length - count;
+      const itemsWidth = getVisibleItemsWidth(count);
+      const itemsGap = count > 1 ? normalizedSpacing * (count - 1) : 0;
+      const currentDisclosureWidth = getDisclosureWidth(hiddenCount);
       const disclosureGap =
         (hiddenCount > 0 || reserveDisclosureSpace) && count > 0
           ? normalizedSpacing
