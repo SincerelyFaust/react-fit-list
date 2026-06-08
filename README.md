@@ -8,7 +8,7 @@
 
 📦 **npm:** https://www.npmjs.com/package/react-fit-list
 
-`react-fit-list` is a headless React component and hook for responsive single-line lists, tags, chips, breadcrumbs, and recipient lists that collapse overflowing items into a customizable “+N” disclosure.
+`react-fit-list` is a headless React utility for responsive lists that collapse overflowing items into a customizable disclosure.
 
 It ships with:
 
