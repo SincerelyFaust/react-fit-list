@@ -16,12 +16,12 @@ const useIsoLayoutEffect =
 function getEstimatedWidth<T>(
   item: T,
   index: number,
-  itemWidthEstimate: number | ((item: T, index: number) => number) | undefined,
+  estimateItemWidth: number | ((item: T, index: number) => number) | undefined,
   fallback: number
 ) {
-  if (typeof itemWidthEstimate === "function")
-    return itemWidthEstimate(item, index);
-  if (typeof itemWidthEstimate === "number") return itemWidthEstimate;
+  if (typeof estimateItemWidth === "function")
+    return estimateItemWidth(item, index);
+  if (typeof estimateItemWidth === "number") return estimateItemWidth;
   return fallback;
 }
 
@@ -37,38 +37,39 @@ function getEstimatedWidth<T>(
  * ```tsx
  * const fit = useFitList({
  *   items: tags,
- *   getKey: (tag) => tag.id,
- *   gap: 8,
+ *   getItemKey: (tag) => tag.id,
+ *   spacing: 8,
  * });
  * ```
  */
 export function useFitList<T>({
   items,
-  getKey,
-  preserveOverflowSpace = false,
-  overflowWidth,
-  gap = 8,
-  collapseFrom = "end",
-  itemWidthEstimate,
-  measurement = "live",
-  expanded,
-  defaultExpanded = false,
-  onExpandedChange,
-  measureOverflowWidth,
+  getItemKey,
+  reserveDisclosureSpace = false,
+  disclosureWidth,
+  spacing = 8,
+  trimFrom = "end",
+  maxVisibleItems,
+  estimateItemWidth,
+  measurementMode = "actual",
+  open,
+  defaultOpen = false,
+  onOpenChange,
+  measureDisclosureWidth,
 }: UseFitListOptions<T>): UseFitListResult<T> {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const overflowRef = useRef<HTMLElement | null>(null);
+  const disclosureRef = useRef<HTMLElement | null>(null);
   const itemNodeMap = useRef(new Map<React.Key, HTMLElement>());
   const measureNodeMap = useRef(new Map<React.Key, HTMLElement>());
   const [visibleCount, setVisibleCount] = useState(items.length);
-  const [isExpanded, setExpanded] = useControllableState<boolean>({
-    value: expanded,
-    defaultValue: defaultExpanded,
-    onChange: onExpandedChange,
+  const [isOpen, setOpen] = useControllableState<boolean>({
+    value: open,
+    defaultValue: defaultOpen,
+    onChange: onOpenChange,
   });
 
   const compute = useCallback(() => {
-    if (isExpanded) {
+    if (isOpen) {
       setVisibleCount(items.length);
       return;
     }
@@ -85,51 +86,57 @@ export function useFitList<T>({
       return;
     }
 
-    const keys = items.map(getKey);
+    const keys = items.map(getItemKey);
     const itemWidths = items.map((item, index) => {
       const key = keys[index];
       const measureNode = measureNodeMap.current.get(key);
       const liveNode = itemNodeMap.current.get(key);
-      if (measurement === "live") {
+      if (measurementMode === "actual") {
         if (measureNode) return measureNode.offsetWidth;
         if (liveNode) return liveNode.offsetWidth;
       }
-      return getEstimatedWidth(item, index, itemWidthEstimate, 96);
+      return getEstimatedWidth(item, index, estimateItemWidth, 96);
     });
 
-    let nextVisible = items.length;
+    const largestAllowedCount = Math.min(
+      items.length,
+      typeof maxVisibleItems === "number"
+        ? Math.max(0, Math.floor(maxVisibleItems))
+        : items.length
+    );
+    let nextVisible = largestAllowedCount;
 
-    // Walk down from "all items visible" until the row fits within the container.
-    for (let count = items.length; count >= 0; count -= 1) {
+    // Walk down from the maximum allowed visible count until the row fits.
+    for (let count = largestAllowedCount; count >= 0; count -= 1) {
       const hiddenCount = items.length - count;
       const visibleWidths =
-        collapseFrom === "end"
+        trimFrom === "end"
           ? itemWidths.slice(0, count)
           : itemWidths.slice(items.length - count);
 
       const itemsWidth = visibleWidths.reduce((sum, width) => sum + width, 0);
-      const itemsGap = count > 1 ? gap * (count - 1) : 0;
+      const itemsGap = count > 1 ? spacing * (count - 1) : 0;
 
-      let currentOverflowWidth = 0;
+      let currentDisclosureWidth = 0;
       if (hiddenCount > 0) {
-        if (typeof overflowWidth === "number") {
-          currentOverflowWidth = overflowWidth;
-        } else if (measureOverflowWidth) {
-          currentOverflowWidth = measureOverflowWidth(hiddenCount);
+        if (typeof disclosureWidth === "number") {
+          currentDisclosureWidth = disclosureWidth;
+        } else if (measureDisclosureWidth) {
+          currentDisclosureWidth = measureDisclosureWidth(hiddenCount);
         } else {
-          currentOverflowWidth = overflowRef.current?.offsetWidth ?? 44;
+          currentDisclosureWidth = disclosureRef.current?.offsetWidth ?? 44;
         }
-      } else if (preserveOverflowSpace) {
-        if (typeof overflowWidth === "number") {
-          currentOverflowWidth = overflowWidth;
+      } else if (reserveDisclosureSpace) {
+        if (typeof disclosureWidth === "number") {
+          currentDisclosureWidth = disclosureWidth;
         } else {
-          currentOverflowWidth = overflowRef.current?.offsetWidth ?? 44;
+          currentDisclosureWidth = disclosureRef.current?.offsetWidth ?? 44;
         }
       }
 
-      const overflowGap =
-        (hiddenCount > 0 || preserveOverflowSpace) && count > 0 ? gap : 0;
-      const total = itemsWidth + itemsGap + overflowGap + currentOverflowWidth;
+      const disclosureGap =
+        (hiddenCount > 0 || reserveDisclosureSpace) && count > 0 ? spacing : 0;
+      const total = itemsWidth + itemsGap + disclosureGap + currentDisclosureWidth;
 
       if (total <= containerWidth) {
         nextVisible = count;
@@ -139,16 +146,17 @@ export function useFitList<T>({
 
     setVisibleCount((prev) => (prev === nextVisible ? prev : nextVisible));
   }, [
-    collapseFrom,
-    itemWidthEstimate,
-    gap,
-    getKey,
-    isExpanded,
+    trimFrom,
+    estimateItemWidth,
+    spacing,
+    getItemKey,
+    isOpen,
     items,
-    measurement,
-    measureOverflowWidth,
-    overflowWidth,
-    preserveOverflowSpace,
+    measurementMode,
+    maxVisibleItems,
+    measureDisclosureWidth,
+    disclosureWidth,
+    reserveDisclosureSpace,
   ]);
 
   useIsoLayoutEffect(() => {
@@ -196,39 +204,39 @@ export function useFitList<T>({
     []
   );
 
-  const registerOverflow = useCallback((node: HTMLElement | null) => {
-    overflowRef.current = node;
+  const registerDisclosure = useCallback((node: HTMLElement | null) => {
+    disclosureRef.current = node;
   }, []);
 
   const clampedVisibleCount = Math.max(0, Math.min(visibleCount, items.length));
 
   const visibleItems = useMemo(() => {
-    if (isExpanded) return [...items];
-    if (collapseFrom === "end") return items.slice(0, clampedVisibleCount);
+    if (isOpen) return [...items];
+    if (trimFrom === "end") return items.slice(0, clampedVisibleCount);
     return items.slice(items.length - clampedVisibleCount);
-  }, [clampedVisibleCount, collapseFrom, isExpanded, items]);
+  }, [clampedVisibleCount, trimFrom, isOpen, items]);
 
   const hiddenItems = useMemo(() => {
-    if (isExpanded) return [];
-    if (collapseFrom === "end") return items.slice(clampedVisibleCount);
+    if (isOpen) return [];
+    if (trimFrom === "end") return items.slice(clampedVisibleCount);
     return items.slice(0, items.length - clampedVisibleCount);
-  }, [clampedVisibleCount, collapseFrom, isExpanded, items]);
+  }, [clampedVisibleCount, trimFrom, isOpen, items]);
 
-  const toggleExpanded = useCallback(() => {
-    setExpanded(!isExpanded);
-  }, [isExpanded, setExpanded]);
+  const toggleOpen = useCallback(() => {
+    setOpen(!isOpen);
+  }, [isOpen, setOpen]);
 
   return {
     containerRef,
     registerItem,
     registerMeasureItem,
-    registerOverflow,
+    registerDisclosure,
     visibleItems: visibleItems as T[],
     hiddenItems: hiddenItems as T[],
     hiddenCount: hiddenItems.length,
-    isExpanded,
-    setExpanded,
-    toggleExpanded,
+    isOpen,
+    setOpen,
+    toggleOpen,
     recompute: compute,
   };
 }

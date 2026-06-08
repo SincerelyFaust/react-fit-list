@@ -8,7 +8,7 @@
 
 📦 **npm:** https://www.npmjs.com/package/react-fit-list
 
-`react-fit-list` is a headless React utility for rendering a single horizontal row of items, keeping what fits visible and collapsing the rest behind an overflow trigger.
+`react-fit-list` is a small React utility for building one-line lists that adapt to the available width. It keeps the items that fit in view and moves the rest behind a disclosure control you can render as a count, button, menu trigger, or anything else your UI needs.
 
 It ships with:
 
@@ -39,7 +39,7 @@ export function Example() {
     <div style={{ width: 240 }}>
       <FitList
         items={items}
-        getKey={(item) => item.id}
+        getItemKey={(item) => item.id}
         renderItem={(item) => (
           <span
             style={{
@@ -65,56 +65,75 @@ export function Example() {
 
 ### `<FitList />`
 
+Use the component when you want the library to handle the layout, hidden measurement nodes, and default disclosure rendering for you.
+
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `items` | `readonly T[]` | — | Items to fit into a single row. |
-| `getKey` | `(item, index) => React.Key` | — | Returns a stable React key for each item. |
+| `getItemKey` | `(item, index) => React.Key` | — | Returns a stable React key for each item. |
 | `renderItem` | `(item, index) => React.ReactNode` | — | Renders a single item. |
-| `renderOverflow` | `(args) => React.ReactNode` | `({ hiddenCount }) => +hiddenCount` | Renders the overflow trigger contents. |
+| `renderDisclosure` | `(args) => React.ReactNode` | `+hiddenCount` button | Renders the control shown when items are hidden. Return a custom button or menu trigger here when you need custom behavior. |
 | `className` | `string` | — | Class applied to the root row. |
-| `itemsClassName` | `string` | — | Class applied to the visible-items wrapper. |
+| `listClassName` | `string` | — | Class applied to the visible-items wrapper. |
 | `itemClassName` | `string` | — | Class applied to each visible item wrapper. |
-| `overflowButtonClassName` | `string` | — | Class applied to the overflow button element. |
-| `measurementClassName` | `string` | `itemClassName` | Class applied to hidden measurement nodes when sizing depends on matching CSS. |
-| `emptyContent` | `React.ReactNode` | `null` | Content rendered when `items` is empty. |
-| `gap` | `number` | `8` | Space between items and the overflow trigger. |
-| `collapseFrom` | `'end' \| 'start'` | `'end'` | Which side of the list gets collapsed first. |
-| `overflowPosition` | `'edge' \| 'inline'` | `'edge'` | Keep the overflow trigger at the row edge or place it next to the hidden side. |
-| `preserveOverflowSpace` | `boolean` | `false` | Reserve room for the overflow trigger even when everything fits. |
-| `overflowWidth` | `number` | auto | Fixed overflow width in pixels. Useful when the trigger size is known. |
-| `itemWidthEstimate` | `number \| ((item, index) => number)` | fallback `96` | Width estimate used in `estimate` mode or before live measurements are available. |
-| `measurement` | `'live' \| 'estimate'` | `'live'` | Width calculation strategy. |
-| `expanded` | `boolean` | uncontrolled | Controlled expanded state. |
-| `defaultExpanded` | `boolean` | `false` | Initial expanded state for uncontrolled usage. |
-| `onExpandedChange` | `(expanded: boolean) => void` | — | Called when expanded state changes. |
-| `onOverflowClick` | `(args, event) => void` | — | Called when the overflow button is clicked. |
+| `disclosureClassName` | `string` | — | Class applied to the default disclosure button. |
+| `sizerClassName` | `string` | `itemClassName` | Class applied to hidden measurement nodes when sizing depends on matching CSS. |
+| `emptyFallback` | `React.ReactNode` | `null` | Content rendered when `items` is empty. |
+| `spacing` | `number` | `8` | Space between items and the disclosure. |
+| `trimFrom` | `'end' \| 'start'` | `'end'` | Which side of the list hides items first. |
+| `disclosurePlacement` | `'edge' \| 'adjacent'` | `'edge'` | Keep the disclosure at the row edge or place it next to the trimmed side. |
+| `maxVisibleItems` | `number` | — | Caps how many items may be shown while the list is closed, even when more items would fit. |
+| `reserveDisclosureSpace` | `boolean` | `false` | Reserve room for the disclosure even when everything fits. |
+| `disclosureWidth` | `number` | auto | Fixed disclosure width in pixels. Useful when the control size is known. |
+| `estimateItemWidth` | `number \| ((item, index) => number)` | fallback `96` | Width estimate used in `estimated` mode or before actual measurements are available. |
+| `measurementMode` | `'actual' \| 'estimated'` | `'actual'` | Width calculation strategy. |
+| `open` | `boolean` | uncontrolled | Controlled open state. |
+| `defaultOpen` | `boolean` | `false` | Initial open state for uncontrolled usage. |
+| `onOpenChange` | `(open: boolean) => void` | — | Called when open state changes. |
 
-### Overflow render args
+### Disclosure render args
 
-`renderOverflow` and `onOverflowClick` receive the same overflow state object:
+`renderDisclosure` receives the current fit state plus open-state helpers:
 
 ```ts
 {
   hiddenCount: number
   hiddenItems: T[]
   visibleItems: T[]
-  isExpanded: boolean
-  setExpanded: (expanded: boolean) => void
-  toggle: () => void
+  isOpen: boolean
+  setOpen: (open: boolean) => void
+  toggleOpen: () => void
 }
+```
+
+A custom disclosure can render its own button and event handling:
+
+```tsx
+<FitList
+  items={items}
+  getItemKey={(item) => item.id}
+  renderItem={(item) => <Tag>{item.label}</Tag>}
+  renderDisclosure={({ hiddenCount, hiddenItems }) => (
+    <button onClick={() => console.log(hiddenItems)}>
+      Show {hiddenCount} more
+    </button>
+  )}
+/>
 ```
 
 ## Hook API
 
 ### `useFitList()`
 
+Use the hook when you want the fitting calculation but need full control over markup.
+
 ```tsx
 import { useFitList } from 'react-fit-list'
 
 const fit = useFitList({
   items,
-  getKey: (item) => item.id,
-  gap: 8,
+  getItemKey: (item) => item.id,
+  spacing: 8,
 })
 ```
 
@@ -123,17 +142,18 @@ const fit = useFitList({
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
 | `items` | `readonly T[]` | — | Items to measure. |
-| `getKey` | `(item, index) => React.Key` | — | Returns a stable React key for each item. |
-| `gap` | `number` | `8` | Space between items and overflow. |
-| `collapseFrom` | `'end' \| 'start'` | `'end'` | Which side collapses first. |
-| `preserveOverflowSpace` | `boolean` | `false` | Reserve space for overflow even when all items fit. |
-| `overflowWidth` | `number` | auto | Fixed overflow width in pixels. |
-| `itemWidthEstimate` | `number \| ((item, index) => number)` | fallback `96` | Width estimate for `estimate` mode. |
-| `measurement` | `'live' \| 'estimate'` | `'live'` | Width calculation strategy. |
-| `expanded` | `boolean` | uncontrolled | Controlled expanded state. |
-| `defaultExpanded` | `boolean` | `false` | Initial expanded state. |
-| `onExpandedChange` | `(expanded: boolean) => void` | — | Called whenever expanded state changes. |
-| `measureOverflowWidth` | `(hiddenCount: number) => number` | — | Custom overflow width measurement callback. |
+| `getItemKey` | `(item, index) => React.Key` | — | Returns a stable React key for each item. |
+| `spacing` | `number` | `8` | Space between items and disclosure. |
+| `trimFrom` | `'end' \| 'start'` | `'end'` | Which side hides items first. |
+| `maxVisibleItems` | `number` | — | Caps how many items may be visible while closed. |
+| `reserveDisclosureSpace` | `boolean` | `false` | Reserve disclosure space even when all items fit. |
+| `disclosureWidth` | `number` | auto | Fixed disclosure width in pixels. |
+| `estimateItemWidth` | `number \| ((item, index) => number)` | fallback `96` | Width estimate for `estimated` mode. |
+| `measurementMode` | `'actual' \| 'estimated'` | `'actual'` | Width calculation strategy. |
+| `open` | `boolean` | uncontrolled | Controlled open state. |
+| `defaultOpen` | `boolean` | `false` | Initial open state. |
+| `onOpenChange` | `(open: boolean) => void` | — | Called whenever open state changes. |
+| `measureDisclosureWidth` | `(hiddenCount: number) => number` | — | Custom disclosure width measurement callback. |
 
 #### Return value
 
@@ -142,11 +162,17 @@ const fit = useFitList({
 | `containerRef` | `RefObject<HTMLDivElement \| null>` | Attach to the outer container. |
 | `registerItem` | `(key) => (node) => void` | Registers visible item nodes for measurement. |
 | `registerMeasureItem` | `(key) => (node) => void` | Registers hidden measurement nodes. |
-| `registerOverflow` | `(node) => void` | Registers the overflow node. |
-| `visibleItems` | `T[]` | Items currently visible in the collapsed row. |
-| `hiddenItems` | `T[]` | Items currently hidden behind overflow. |
+| `registerDisclosure` | `(node) => void` | Registers the disclosure node. |
+| `visibleItems` | `T[]` | Items currently visible in the closed row. |
+| `hiddenItems` | `T[]` | Items currently hidden behind the disclosure. |
 | `hiddenCount` | `number` | Number of hidden items. |
-| `isExpanded` | `boolean` | Whether the list is expanded. |
-| `setExpanded` | `(expanded: boolean) => void` | Sets expanded state directly. |
-| `toggleExpanded` | `() => void` | Toggles expanded state. |
+| `isOpen` | `boolean` | Whether the list is open. |
+| `setOpen` | `(open: boolean) => void` | Sets open state directly. |
+| `toggleOpen` | `() => void` | Toggles open state. |
 | `recompute` | `() => void` | Re-runs the fit calculation using current measurements. |
+
+## Notes
+
+The component renders a visually hidden measurement tree so item widths can be calculated without changing the visible layout. Keep `renderItem` deterministic and use `sizerClassName` when your item width depends on CSS classes that are not already applied through `itemClassName`.
+
+On the server, `react-fit-list` renders from the data you provide and measures after hydration in the browser. Use `measurementMode="estimated"` with `estimateItemWidth` when you prefer predictable first-pass sizing over DOM measurement.

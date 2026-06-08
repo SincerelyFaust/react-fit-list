@@ -1,14 +1,22 @@
 import * as React from "react";
 import { useFitList } from "../hooks/useFitList";
-import type { FitListOverflowRenderArgs, FitListProps } from "../types";
+import type { FitListDisclosureRenderArgs, FitListProps } from "../types";
 
-function defaultOverflow({ hiddenCount }: { hiddenCount: number }) {
-  return <span>+{hiddenCount}</span>;
+function defaultDisclosure({
+  hiddenCount,
+  isOpen,
+  toggleOpen,
+}: FitListDisclosureRenderArgs<unknown>) {
+  return (
+    <button type="button" onClick={toggleOpen} aria-expanded={isOpen}>
+      +{hiddenCount}
+    </button>
+  );
 }
 
 /**
- * Responsive single-row list that hides overflowing items behind a configurable
- * overflow affordance.
+ * Responsive single-row list that keeps the items that fit visible and places
+ * the rest behind a configurable disclosure control.
  *
  * `FitList` is useful for chips, tags, breadcrumbs, recipients, filters, and
  * other horizontally laid out items where preserving a clean single-row layout
@@ -16,46 +24,46 @@ function defaultOverflow({ hiddenCount }: { hiddenCount: number }) {
  *
  * Features:
  * - automatic fit calculation based on available width
- * - customizable overflow renderer (`+3`, `Show more`, badge, etc.)
- * - controlled or uncontrolled expanded state
- * - collapse from the start or the end of the list
- * - live DOM measurement or estimated-width mode
+ * - customizable disclosure renderer (`+3`, `Show more`, menu trigger, etc.)
+ * - controlled or uncontrolled open state
+ * - trim from the start or the end of the list
+ * - actual DOM measurement or estimated-width mode
  */
 export function FitList<T>({
   items,
-  getKey,
+  getItemKey,
   renderItem,
-  renderOverflow = defaultOverflow,
+  renderDisclosure = defaultDisclosure,
   className,
-  itemsClassName,
+  listClassName,
   itemClassName,
-  overflowButtonClassName,
-  measurementClassName,
-  emptyContent = null,
-  gap = 8,
-  collapseFrom = "end",
-  overflowPosition = "edge",
-  preserveOverflowSpace = false,
-  overflowWidth,
-  itemWidthEstimate,
-  measurement = "live",
-  expanded,
-  defaultExpanded = false,
-  onExpandedChange,
-  onOverflowClick,
+  disclosureClassName,
+  sizerClassName,
+  emptyFallback = null,
+  spacing = 8,
+  trimFrom = "end",
+  disclosurePlacement = "edge",
+  maxVisibleItems,
+  reserveDisclosureSpace = false,
+  disclosureWidth,
+  estimateItemWidth,
+  measurementMode = "actual",
+  open,
+  defaultOpen = false,
+  onOpenChange,
 }: FitListProps<T>) {
-  const overflowMeasureRef = React.useRef<HTMLSpanElement | null>(null);
-  const isDefaultOverflowRenderer = renderOverflow === defaultOverflow;
+  const disclosureMeasureRef = React.useRef<HTMLSpanElement | null>(null);
+  const isDefaultDisclosureRenderer = renderDisclosure === defaultDisclosure;
 
-  const measureOverflowWidth = React.useCallback(
+  const measureDisclosureWidth = React.useCallback(
     (hiddenCount: number) => {
-      if (typeof overflowWidth === "number") return overflowWidth;
-      const node = overflowMeasureRef.current;
+      if (typeof disclosureWidth === "number") return disclosureWidth;
+      const node = disclosureMeasureRef.current;
       if (!node) return 44;
 
-      // The default overflow label changes width with the hidden count, so we
+      // The default disclosure label changes width with the hidden count, so we
       // temporarily swap its text content to measure the exact width needed.
-      if (isDefaultOverflowRenderer) {
+      if (isDefaultDisclosureRenderer) {
         const previous = node.textContent;
         node.textContent = `+${hiddenCount}`;
         const width = node.offsetWidth;
@@ -65,41 +73,44 @@ export function FitList<T>({
 
       return node.offsetWidth;
     },
-    [isDefaultOverflowRenderer, overflowWidth]
+    [isDefaultDisclosureRenderer, disclosureWidth]
   );
 
   const {
     containerRef,
     registerItem,
     registerMeasureItem,
-    registerOverflow,
+    registerDisclosure,
     visibleItems,
     hiddenItems,
     hiddenCount,
-    isExpanded,
-    setExpanded,
-    toggleExpanded,
+    isOpen,
+    setOpen,
+    toggleOpen,
   } = useFitList({
     items,
-    getKey,
-    gap,
-    collapseFrom,
-    preserveOverflowSpace,
-    overflowWidth,
-    itemWidthEstimate,
-    measurement,
-    expanded,
-    defaultExpanded,
-    onExpandedChange,
-    measureOverflowWidth: isDefaultOverflowRenderer ? measureOverflowWidth : undefined,
+    getItemKey,
+    spacing,
+    trimFrom,
+    maxVisibleItems,
+    reserveDisclosureSpace,
+    disclosureWidth,
+    estimateItemWidth,
+    measurementMode,
+    open,
+    defaultOpen,
+    onOpenChange,
+    measureDisclosureWidth: isDefaultDisclosureRenderer
+      ? measureDisclosureWidth
+      : undefined,
   });
 
   const visibleEntries = React.useMemo(() => {
-    if (isExpanded) {
+    if (isOpen) {
       return items.map((item, index) => ({ item, index }));
     }
 
-    if (collapseFrom === "end") {
+    if (trimFrom === "end") {
       return items
         .slice(0, visibleItems.length)
         .map((item, index) => ({ item, index }));
@@ -109,35 +120,41 @@ export function FitList<T>({
     return items
       .slice(startIndex)
       .map((item, index) => ({ item, index: startIndex + index }));
-  }, [collapseFrom, isExpanded, items, visibleItems.length]);
+  }, [trimFrom, isOpen, items, visibleItems.length]);
 
-  // Avoid mounting a second copy of a custom overflow renderer in the hidden
+  // Avoid mounting a second copy of a custom disclosure renderer in the hidden
   // measurement tree. Some interactive renderers (for example Radix popovers)
   // keep shared state and can open twice when two trigger instances exist.
-  const shouldRenderMeasuredOverflow = isDefaultOverflowRenderer;
+  const shouldRenderMeasuredDisclosure = isDefaultDisclosureRenderer;
 
   if (items.length === 0) {
-    return <>{emptyContent}</>;
+    return <>{emptyFallback}</>;
   }
 
-  const overflowArgs: FitListOverflowRenderArgs<T> = {
+  const disclosureArgs: FitListDisclosureRenderArgs<T> = {
     hiddenCount,
     hiddenItems: [...hiddenItems] as T[],
     visibleItems: [...visibleItems] as T[],
-    isExpanded,
-    setExpanded,
-    toggle: toggleExpanded,
+    isOpen,
+    setOpen,
+    toggleOpen,
   };
 
-  const overflowChildren = renderOverflow(overflowArgs);
+  const disclosureChildren = renderDisclosure(disclosureArgs);
+  const disclosureControl =
+    isDefaultDisclosureRenderer && React.isValidElement(disclosureChildren)
+      ? React.cloneElement(disclosureChildren, {
+          className: disclosureClassName,
+        } as React.HTMLAttributes<HTMLElement>)
+      : disclosureChildren;
 
-  const isInlineOverflow = overflowPosition === "inline" && !isExpanded;
-  const shouldPlaceOverflowBeforeItems =
-    isInlineOverflow && collapseFrom === "start";
+  const isAdjacentDisclosure = disclosurePlacement === "adjacent" && !isOpen;
+  const shouldPlaceDisclosureBeforeItems =
+    isAdjacentDisclosure && trimFrom === "start";
 
-  const overflowNode = hiddenCount > 0 || preserveOverflowSpace ? (
+  const disclosureNode = hiddenCount > 0 || reserveDisclosureSpace ? (
     <div
-      ref={registerOverflow}
+      ref={registerDisclosure}
       style={{
         visibility: hiddenCount > 0 ? "visible" : "hidden",
         flex: "0 0 auto",
@@ -145,35 +162,24 @@ export function FitList<T>({
         display: "block",
       }}
     >
-      {hiddenCount > 0 ? (
-        <button
-          className={overflowButtonClassName}
-          type="button"
-          onClick={(event) => onOverflowClick?.(overflowArgs, event)}
-          aria-expanded={isExpanded}
-        >
-          {overflowChildren}
-        </button>
-      ) : (
-        <span aria-hidden="true">+0</span>
-      )}
+      {hiddenCount > 0 ? disclosureControl : <span aria-hidden="true">+0</span>}
     </div>
   ) : null;
 
   const itemsNode = (
     <div
-      className={itemsClassName}
+      className={listClassName}
       style={{
         display: "flex",
         alignItems: "center",
-        gap,
+        gap: spacing,
         minWidth: 0,
-        flex: isInlineOverflow ? "0 1 auto" : "1 1 auto",
+        flex: isAdjacentDisclosure ? "0 1 auto" : "1 1 auto",
         overflow: "hidden",
       }}
     >
       {visibleEntries.map(({ item, index }) => {
-        const key = getKey(item, index);
+        const key = getItemKey(item, index);
         return (
           <div
             key={key}
@@ -200,14 +206,14 @@ export function FitList<T>({
         style={{
           display: "flex",
           alignItems: "center",
-          gap,
+          gap: spacing,
           minWidth: 0,
           whiteSpace: "nowrap",
         }}
       >
-        {shouldPlaceOverflowBeforeItems ? overflowNode : null}
+        {shouldPlaceDisclosureBeforeItems ? disclosureNode : null}
         {itemsNode}
-        {shouldPlaceOverflowBeforeItems ? null : overflowNode}
+        {shouldPlaceDisclosureBeforeItems ? null : disclosureNode}
       </div>
 
       {/*
@@ -226,14 +232,14 @@ export function FitList<T>({
           opacity: 0,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap }}>
+        <div style={{ display: "flex", alignItems: "center", gap: spacing }}>
           {items.map((item, index) => {
-            const key = getKey(item, index);
+            const key = getItemKey(item, index);
             return (
               <span
                 key={`measure:${String(key)}`}
                 ref={registerMeasureItem(key)}
-                className={measurementClassName ?? itemClassName}
+                className={sizerClassName ?? itemClassName}
                 style={{
                   display: "inline-flex",
                   whiteSpace: "nowrap",
@@ -244,13 +250,13 @@ export function FitList<T>({
             );
           })}
 
-          {shouldRenderMeasuredOverflow ? (
+          {shouldRenderMeasuredDisclosure ? (
             <span
-              ref={overflowMeasureRef}
-              className={overflowButtonClassName}
+              ref={disclosureMeasureRef}
+              className={disclosureClassName}
               style={{ display: "inline-flex", whiteSpace: "nowrap" }}
             >
-              {overflowChildren}
+              {disclosureControl}
             </span>
           ) : null}
         </div>

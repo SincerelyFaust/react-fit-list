@@ -31,14 +31,14 @@ afterAll(() => {
 });
 
 describe("useFitList", () => {
-  it("computes visible and hidden items in estimate mode", () => {
+  it("computes visible and hidden items in estimated mode", () => {
     const { result } = renderHook(() =>
       useFitList({
         items: ["A", "B", "C", "D"],
-        getKey: (item) => item,
-        measurement: "estimate",
-        itemWidthEstimate: 80,
-        overflowWidth: 40,
+        getItemKey: (item) => item,
+        measurementMode: "estimated",
+        estimateItemWidth: 80,
+        disclosureWidth: 40,
       })
     );
 
@@ -54,15 +54,15 @@ describe("useFitList", () => {
     expect(result.current.hiddenCount).toBe(2);
   });
 
-  it("respects preserveOverflowSpace even when everything fits", () => {
+  it("respects reserveDisclosureSpace even when everything fits", () => {
     const { result } = renderHook(() =>
       useFitList({
         items: ["A", "B"],
-        getKey: (item) => item,
-        measurement: "estimate",
-        itemWidthEstimate: 80,
-        overflowWidth: 80,
-        preserveOverflowSpace: true,
+        getItemKey: (item) => item,
+        measurementMode: "estimated",
+        estimateItemWidth: 80,
+        disclosureWidth: 80,
+        reserveDisclosureSpace: true,
       })
     );
 
@@ -78,22 +78,45 @@ describe("useFitList", () => {
     expect(result.current.hiddenCount).toBe(1);
   });
 
-  it("supports controlled expanded state", () => {
-    const onExpandedChange = vi.fn();
+  it("limits the closed list with maxVisibleItems", () => {
+    const { result } = renderHook(() =>
+      useFitList({
+        items: ["A", "B", "C", "D"],
+        getItemKey: (item) => item,
+        measurementMode: "estimated",
+        estimateItemWidth: 20,
+        disclosureWidth: 40,
+        maxVisibleItems: 2,
+      })
+    );
+
+    const container = document.createElement("div");
+    result.current.containerRef.current = container;
+
+    act(() => {
+      result.current.recompute();
+    });
+
+    expect(result.current.visibleItems).toEqual(["A", "B"]);
+    expect(result.current.hiddenItems).toEqual(["C", "D"]);
+  });
+
+  it("supports controlled open state", () => {
+    const onOpenChange = vi.fn();
 
     const { result, rerender } = renderHook(
-      ({ expanded }: { expanded?: boolean }) =>
+      ({ open }: { open?: boolean }) =>
         useFitList({
           items: ["A", "B", "C"],
-          getKey: (item) => item,
-          measurement: "estimate",
-          itemWidthEstimate: 80,
-          overflowWidth: 40,
-          expanded,
-          onExpandedChange,
+          getItemKey: (item) => item,
+          measurementMode: "estimated",
+          estimateItemWidth: 80,
+          disclosureWidth: 40,
+          open,
+          onOpenChange,
         }),
       {
-        initialProps: { expanded: false },
+        initialProps: { open: false },
       }
     );
 
@@ -101,18 +124,18 @@ describe("useFitList", () => {
     result.current.containerRef.current = container;
 
     act(() => {
-      result.current.toggleExpanded();
+      result.current.toggleOpen();
     });
 
-    expect(onExpandedChange).toHaveBeenCalledWith(true);
+    expect(onOpenChange).toHaveBeenCalledWith(true);
 
-    rerender({ expanded: true });
+    rerender({ open: true });
 
     act(() => {
       result.current.recompute();
     });
 
-    expect(result.current.isExpanded).toBe(true);
+    expect(result.current.isOpen).toBe(true);
     expect(result.current.visibleItems).toEqual(["A", "B", "C"]);
     expect(result.current.hiddenItems).toEqual([]);
   });

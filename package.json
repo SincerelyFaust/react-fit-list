@@ -1,17 +1,17 @@
 {
   "name": "react-fit-list",
-  "version": "1.0.4",
-  "description": "A headless React utility for rendering a single horizontal row of items, keeping what fits visible and collapsing the rest behind an overflow trigger.",
+  "version": "2.0.0",
+  "description": "A small React utility for building responsive one-line lists that keep fitting items visible and tuck the rest behind a customizable disclosure.",
   "keywords": [
     "react",
     "fit-list",
-    "overflow",
-    "single-row",
-    "headless",
+    "responsive-list",
+    "adaptive-list",
+    "disclosure",
+    "one-line-list",
     "chips",
     "tags",
     "breadcrumbs",
-    "responsive",
     "typescript",
     "ui"
   ],

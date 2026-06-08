@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { FitList } from "react-fit-list";
-import type { FitListOverflowRenderArgs } from "react-fit-list";
+import type { FitListDisclosureRenderArgs } from "react-fit-list";
 import "./App.css";
 import { FaGithub } from "react-icons/fa";
 import { SiNpm } from "react-icons/si";
@@ -185,8 +185,8 @@ function App() {
     };
   }, [popover]);
 
-  const openOverflowPopover = (
-    args: FitListOverflowRenderArgs<Item>,
+  const openDisclosurePopover = (
+    args: FitListDisclosureRenderArgs<Item>,
     event: React.MouseEvent<HTMLElement>
   ) => {
     const frame = frameRef.current;
@@ -237,9 +237,9 @@ function App() {
               <span className="package-name">react-fit-list</span>
             </h1>
             <p className="description">
-              A headless React primitive for keeping horizontal content on one
-              line by fitting what can be shown and collapsing the rest behind
-              an overflow button.
+              A small React utility for building responsive one-line lists
+              that keep fitting items visible and tuck the rest behind a
+              customizable disclosure.
             </p>
           </div>
 
@@ -274,7 +274,7 @@ function App() {
             <p className="panel-description">
               {isMobileViewport
                 ? "Use the slider to preview how the list behaves at smaller widths."
-                : "Drag the resize handle to test how the list fits and when the overflow button appears."}
+                : "Drag the resize handle to test how the list fits and when the disclosure button appears."}
             </p>
           </div>
 
@@ -317,13 +317,20 @@ function App() {
 
               <FitList
                 items={items}
-                getKey={(item) => item.id}
-                gap={8}
+                getItemKey={(item) => item.id}
+                spacing={8}
                 className="fitlist"
-                overflowButtonClassName="more"
                 renderItem={(item) => <Tag>{item.label}</Tag>}
-                renderOverflow={({ hiddenCount }) => <>{`+${hiddenCount}`}</>}
-                onOverflowClick={openOverflowPopover}
+                renderDisclosure={(args) => (
+                  <button
+                    className="more"
+                    type="button"
+                    onClick={(event) => openDisclosurePopover(args, event)}
+                    aria-expanded={args.isOpen}
+                  >
+                    +{args.hiddenCount}
+                  </button>
+                )}
               />
             </div>
 
